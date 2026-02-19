@@ -50,6 +50,28 @@ def get_response(user_text):
             return f"📌 Service: {key}\n👤 POC: {DATA[key]}"
     return f'Sorry, couldn\'t find "{text}".\nType "list" to see all services.'
 
+POPUP_STYLE = """
+    QMessageBox { background-color: #ddeeff; }
+    QLabel { color: #000000; font-size: 13px; font-family: Helvetica; }
+    QPushButton { background-color: #1a73e8; color: #ffffff; border-radius: 6px;
+                  padding: 6px 20px; font-size: 13px; font-weight: bold; min-width: 70px; }
+    QPushButton:hover { background-color: #1558b0; }
+"""
+
+def show_popup(parent, title, message, kind="info"):
+    msg = QMessageBox(parent)
+    msg.setWindowTitle(title)
+    msg.setText(message)
+    msg.setStyleSheet(POPUP_STYLE)
+    if kind == "warn":
+        msg.setIcon(QMessageBox.Warning)
+    elif kind == "question":
+        msg.setIcon(QMessageBox.Question)
+        msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+    else:
+        msg.setIcon(QMessageBox.Information)
+    return msg.exec_()
+
 
 # ── BUBBLE ───────────────────────────────────────────────
 class Bubble(QFrame):
@@ -65,19 +87,15 @@ class Bubble(QFrame):
         inner = QVBoxLayout(box)
         inner.setContentsMargins(12, 8, 12, 8)
         inner.setSpacing(3)
-
         ls = QLabel(sender)
         ls.setFont(QFont("Helvetica", 9, QFont.Bold))
         ls.setStyleSheet(f"color:{'#1a73e8' if is_bot else '#cce4ff'}; background:transparent;")
         inner.addWidget(ls)
-
         lm = QLabel(message)
         lm.setFont(QFont("Helvetica", 13))
-        # BLACK for bot messages, white for user messages
         lm.setStyleSheet(f"color:{'#000000' if is_bot else '#ffffff'}; background:transparent;")
         lm.setWordWrap(True)
         inner.addWidget(lm)
-
         if is_bot:
             layout.addWidget(box, alignment=Qt.AlignLeft)
             layout.addStretch()
@@ -177,14 +195,13 @@ class TaskTab(QWidget):
 
         root = QVBoxLayout(self)
         root.setContentsMargins(12, 12, 12, 12)
-        root.setSpacing(10)
+        root.setSpacing(8)
 
         title = QLabel("📝  Task Reminder")
         title.setFont(QFont("Helvetica", 15, QFont.Bold))
         title.setStyleSheet("color:#000000; background:transparent;")
         root.addWidget(title)
 
-        # Task name
         name_lbl = QLabel("Task Name:")
         name_lbl.setFont(QFont("Helvetica", 11, QFont.Bold))
         name_lbl.setStyleSheet("color:#000000; background:transparent;")
@@ -200,7 +217,6 @@ class TaskTab(QWidget):
         """)
         root.addWidget(self.task_input)
 
-        # Date/time
         dt_lbl = QLabel("Due Date & Time:")
         dt_lbl.setFont(QFont("Helvetica", 11, QFont.Bold))
         dt_lbl.setStyleSheet("color:#000000; background:transparent;")
@@ -218,25 +234,20 @@ class TaskTab(QWidget):
         """)
         root.addWidget(self.dt_picker)
 
-        # Add button
         add_btn = QPushButton("➕  Add Task")
         add_btn.setFixedHeight(44)
         add_btn.setFont(QFont("Helvetica", 13, QFont.Bold))
         add_btn.setCursor(Qt.PointingHandCursor)
-        add_btn.setStyleSheet("""
-            QPushButton{background:#1a73e8; color:#fff; border:none; border-radius:10px;}
-            QPushButton:hover{background:#1558b0;}
-        """)
+        add_btn.setStyleSheet("QPushButton{background:#1a73e8;color:#fff;border:none;border-radius:10px;}"
+                              "QPushButton:hover{background:#1558b0;}")
         add_btn.clicked.connect(self._add_task)
         root.addWidget(add_btn)
 
-        # Task list label
-        list_lbl = QLabel("Your Tasks:  (select a task to delete)")
+        list_lbl = QLabel("Your Tasks:  (select a task then click action)")
         list_lbl.setFont(QFont("Helvetica", 11, QFont.Bold))
         list_lbl.setStyleSheet("color:#000000; background:transparent;")
         root.addWidget(list_lbl)
 
-        # Task list
         self.task_list = QListWidget()
         self.task_list.setFont(QFont("Helvetica", 12))
         self.task_list.setStyleSheet("""
@@ -246,21 +257,32 @@ class TaskTab(QWidget):
         """)
         root.addWidget(self.task_list)
 
-        # Delete button
-        del_btn = QPushButton("🗑️  Delete Selected Task")
+        # Done + Delete buttons side by side
+        btn_row = QHBoxLayout()
+        btn_row.setSpacing(8)
+
+        done_btn = QPushButton("✅  Mark as Done")
+        done_btn.setFixedHeight(44)
+        done_btn.setFont(QFont("Helvetica", 12, QFont.Bold))
+        done_btn.setCursor(Qt.PointingHandCursor)
+        done_btn.setStyleSheet("QPushButton{background:#2e7d32;color:#fff;border:none;border-radius:10px;}"
+                               "QPushButton:hover{background:#1b5e20;}")
+        done_btn.clicked.connect(self._mark_done)
+        btn_row.addWidget(done_btn)
+
+        del_btn = QPushButton("🗑️  Delete Task")
         del_btn.setFixedHeight(44)
-        del_btn.setFont(QFont("Helvetica", 13, QFont.Bold))
+        del_btn.setFont(QFont("Helvetica", 12, QFont.Bold))
         del_btn.setCursor(Qt.PointingHandCursor)
-        del_btn.setStyleSheet("""
-            QPushButton{background:#e53935; color:#fff; border:none; border-radius:10px;}
-            QPushButton:hover{background:#b71c1c;}
-        """)
+        del_btn.setStyleSheet("QPushButton{background:#e53935;color:#fff;border:none;border-radius:10px;}"
+                              "QPushButton:hover{background:#b71c1c;}")
         del_btn.clicked.connect(self._delete_task)
-        root.addWidget(del_btn)
+        btn_row.addWidget(del_btn)
+
+        root.addLayout(btn_row)
 
         self._refresh_list()
 
-        # Check reminders every 30 seconds
         self.reminder_timer = QTimer()
         self.reminder_timer.timeout.connect(self._check_reminders)
         self.reminder_timer.start(30000)
@@ -268,34 +290,43 @@ class TaskTab(QWidget):
     def _add_task(self):
         name = self.task_input.text().strip()
         if not name:
-            QMessageBox.warning(self, "Empty Task", "Please enter a task name!")
+            show_popup(self, "Empty Task", "Please enter a task name!", "warn")
             return
         due_dt = self.dt_picker.dateTime().toPyDateTime()
         if due_dt <= datetime.now():
-            QMessageBox.warning(self, "Invalid Time", "Please select a future date and time!")
+            show_popup(self, "Invalid Time", "Please select a future date and time!", "warn")
             return
-        task = {"name": name, "due": due_dt.strftime("%Y-%m-%d %H:%M"), "reminded": False}
+        task = {"name": name, "due": due_dt.strftime("%Y-%m-%d %H:%M"), "reminded": False, "done": False}
         self.tasks.append(task)
         save_tasks(self.tasks)
         self.task_input.clear()
         self._refresh_list()
-        QMessageBox.information(self, "Task Added ✅",
-            f'"{name}" added!\n🔔 Reminder set 2 hours before due time.')
+        show_popup(self, "Task Added ✅", f'"{name}" added!\n🔔 Reminder set 2 hours before due time.')
+
+    def _mark_done(self):
+        row = self.task_list.currentRow()
+        if row < 0 or row >= len(self.tasks):
+            show_popup(self, "No Selection", "Please select a task to mark as done!", "warn")
+            return
+        task_name = self.tasks[row]["name"]
+        self.tasks[row]["done"] = True
+        save_tasks(self.tasks)
+        self._refresh_list()
+        show_popup(self, "Task Done ✅", f'"{task_name}" marked as completed! 🎉')
 
     def _delete_task(self):
         row = self.task_list.currentRow()
         if row < 0 or row >= len(self.tasks):
-            QMessageBox.warning(self, "No Selection", "Please select a task from the list to delete!")
+            show_popup(self, "No Selection", "Please select a task to delete!", "warn")
             return
         task_name = self.tasks[row]["name"]
-        confirm = QMessageBox.question(self, "Confirm Delete",
-            f'Are you sure you want to delete:\n"{task_name}"?',
-            QMessageBox.Yes | QMessageBox.No)
-        if confirm == QMessageBox.Yes:
+        result = show_popup(self, "Confirm Delete",
+            f'Are you sure you want to delete:\n"{task_name}"?', "question")
+        if result == QMessageBox.Yes:
             self.tasks.pop(row)
             save_tasks(self.tasks)
             self._refresh_list()
-            QMessageBox.information(self, "Deleted ✅", f'"{task_name}" has been deleted.')
+            show_popup(self, "Deleted ✅", f'"{task_name}" has been deleted.')
 
     def _refresh_list(self):
         self.task_list.clear()
@@ -307,7 +338,12 @@ class TaskTab(QWidget):
         for t in self.tasks:
             due = datetime.strptime(t["due"], "%Y-%m-%d %H:%M")
             now = datetime.now()
-            status = "✅ Done" if due < now else "⏳ Pending"
+            if t.get("done"):
+                status = "✅ Done"
+            elif due < now:
+                status = "⌛ Overdue"
+            else:
+                status = "⏳ Pending"
             remind_time = due - timedelta(hours=2)
             text = (f'{status}  —  {t["name"]}\n'
                     f'     📅 Due: {due.strftime("%d %b %Y, %I:%M %p")}'
@@ -320,7 +356,7 @@ class TaskTab(QWidget):
         now = datetime.now()
         changed = False
         for t in self.tasks:
-            if t.get("reminded"):
+            if t.get("reminded") or t.get("done"):
                 continue
             due = datetime.strptime(t["due"], "%Y-%m-%d %H:%M")
             remind_at = due - timedelta(hours=2)
@@ -331,6 +367,7 @@ class TaskTab(QWidget):
                 msg.setWindowTitle("⏰ Task Reminder!")
                 msg.setText(f'🔔 Reminder!\n\n"{t["name"]}"\nis due at {due.strftime("%I:%M %p")} today!\n\n⏳ Only 2 hours left!')
                 msg.setIcon(QMessageBox.Information)
+                msg.setStyleSheet(POPUP_STYLE)
                 msg.setWindowFlags(Qt.WindowStaysOnTopHint)
                 msg.exec_()
         if changed:
@@ -343,7 +380,7 @@ class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Service POC Bot")
-        self.resize(420, 680)
+        self.resize(420, 700)
         self.setWindowFlags(Qt.Window | Qt.WindowStaysOnTopHint)
         self.setStyleSheet("background:#ddeeff;")
 
@@ -351,7 +388,6 @@ class MainWindow(QWidget):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
-        # Header
         hdr = QFrame()
         hdr.setFixedHeight(56)
         hdr.setStyleSheet("background:#1a73e8;")
@@ -368,7 +404,6 @@ class MainWindow(QWidget):
         hl.addWidget(b)
         root.addWidget(hdr)
 
-        # Tabs
         self.tabs = QTabWidget()
         self.tabs.setFont(QFont("Helvetica", 12))
         self.tabs.setStyleSheet("""
