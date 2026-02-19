@@ -483,23 +483,32 @@ class NotesTab(QWidget):
             self.notes_list.addItem(item)
 
     def _new_note(self):
-        # Save current before creating new
-        self._save_current()
+        self.title_input.blockSignals(True)
+        self.text_editor.blockSignals(True)
+        if self.current_index >= 0 and self.current_index < len(self.notes):
+            self.notes[self.current_index]["title"] = self.title_input.text() or "Untitled"
+            self.notes[self.current_index]["content"] = self.text_editor.toPlainText()
+            save_notes(self.notes)
         note = {"title": "New Note", "content": "", "created": datetime.now().strftime("%Y-%m-%d %H:%M")}
         self.notes.append(note)
         save_notes(self.notes)
-        self._refresh_list()
         self.current_index = len(self.notes) - 1
+        self._refresh_list()
         self.notes_list.setCurrentRow(self.current_index)
         self.title_input.setText("New Note")
         self.text_editor.setPlainText("")
+        self.title_input.blockSignals(False)
+        self.text_editor.blockSignals(False)
         self.title_input.setFocus()
         self.title_input.selectAll()
 
     def _load_note(self, row):
-        self._save_current()
         if row < 0 or row >= len(self.notes):
             return
+        if self.current_index >= 0 and self.current_index < len(self.notes) and self.current_index != row:
+            self.notes[self.current_index]["title"] = self.title_input.text() or "Untitled"
+            self.notes[self.current_index]["content"] = self.text_editor.toPlainText()
+            save_notes(self.notes)
         self.current_index = row
         note = self.notes[row]
         self.title_input.blockSignals(True)
