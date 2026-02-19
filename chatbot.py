@@ -37,8 +37,12 @@ def save_tasks(tasks):
 
 def load_notes():
     if os.path.exists(NOTES_FILE):
-        with open(NOTES_FILE) as f:
-            return json.load(f)
+        try:
+            with open(NOTES_FILE) as f:
+                data = json.load(f)
+                return data if isinstance(data, list) else []
+        except (json.JSONDecodeError, ValueError):
+            return []
     return []
 
 def save_notes(notes):
