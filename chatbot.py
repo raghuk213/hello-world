@@ -6,10 +6,10 @@ from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout,
     QLineEdit, QPushButton, QLabel, QScrollArea, QFrame,
     QCompleter, QTabWidget, QDateTimeEdit, QListWidget,
-    QListWidgetItem, QMessageBox, QSizePolicy
+    QListWidgetItem, QMessageBox
 )
-from PyQt5.QtCore import Qt, QTimer, QDateTime, QThread, pyqtSignal
-from PyQt5.QtGui import QFont, QColor
+from PyQt5.QtCore import Qt, QTimer, QDateTime
+from PyQt5.QtGui import QFont
 
 # ── DATA ─────────────────────────────────────────────────
 DATA = {
@@ -22,7 +22,6 @@ DATA = {
     "Rover":                                         "Harishkumar Rp",
 }
 ALL_KEYS = list(DATA.keys())
-
 TASKS_FILE = os.path.expanduser("~/Desktop/tasks.json")
 
 def load_tasks():
@@ -66,15 +65,19 @@ class Bubble(QFrame):
         inner = QVBoxLayout(box)
         inner.setContentsMargins(12, 8, 12, 8)
         inner.setSpacing(3)
+
         ls = QLabel(sender)
         ls.setFont(QFont("Helvetica", 9, QFont.Bold))
         ls.setStyleSheet(f"color:{'#1a73e8' if is_bot else '#cce4ff'}; background:transparent;")
         inner.addWidget(ls)
+
         lm = QLabel(message)
         lm.setFont(QFont("Helvetica", 13))
-        lm.setStyleSheet(f"color:{'#222' if is_bot else '#fff'}; background:transparent;")
+        # BLACK for bot messages, white for user messages
+        lm.setStyleSheet(f"color:{'#000000' if is_bot else '#ffffff'}; background:transparent;")
         lm.setWordWrap(True)
         inner.addWidget(lm)
+
         if is_bot:
             layout.addWidget(box, alignment=Qt.AlignLeft)
             layout.addStretch()
@@ -90,10 +93,9 @@ class ChatTab(QWidget):
         super().__init__()
         self.setStyleSheet("background:#ddeeff;")
         root = QVBoxLayout(self)
-        root.setContentsMargins(0,0,0,0)
+        root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
-        # Scroll
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setStyleSheet("QScrollArea{background:#ddeeff;border:none;}"
@@ -102,18 +104,17 @@ class ChatTab(QWidget):
         self.msg_widget = QWidget()
         self.msg_widget.setStyleSheet("background:#ddeeff;")
         self.msg_layout = QVBoxLayout(self.msg_widget)
-        self.msg_layout.setContentsMargins(6,10,6,10)
+        self.msg_layout.setContentsMargins(6, 10, 6, 10)
         self.msg_layout.setSpacing(6)
         self.msg_layout.addStretch()
         self.scroll.setWidget(self.msg_widget)
         root.addWidget(self.scroll)
 
-        # Input
         bar = QFrame()
         bar.setFixedHeight(68)
         bar.setStyleSheet("background:#b8d8f0; border-top:1px solid #90c0e8;")
         bl = QHBoxLayout(bar)
-        bl.setContentsMargins(10,12,10,12)
+        bl.setContentsMargins(10, 12, 10, 12)
         bl.setSpacing(8)
 
         self.entry = QLineEdit()
@@ -121,16 +122,16 @@ class ChatTab(QWidget):
         self.entry.setFont(QFont("Helvetica", 13))
         self.entry.setFixedHeight(44)
         self.entry.setStyleSheet("""
-            QLineEdit{background:#fff;color:#222;border:2px solid #90c0e8;border-radius:22px;padding:0 16px;}
+            QLineEdit{background:#fff; color:#000000; border:2px solid #90c0e8; border-radius:22px; padding:0 16px;}
             QLineEdit:focus{border:2px solid #1a73e8;}
         """)
         self.completer = QCompleter(ALL_KEYS)
         self.completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.completer.setFilterMode(Qt.MatchContains)
         self.completer.popup().setStyleSheet("""
-            QListView{background:#fff;color:#222;font-size:13px;border:1px solid #90c0e8;border-radius:8px;padding:4px;}
+            QListView{background:#fff; color:#000000; font-size:13px; border:1px solid #90c0e8; border-radius:8px; padding:4px;}
             QListView::item:hover{background:#ddeeff;}
-            QListView::item:selected{background:#1a73e8;color:white;}
+            QListView::item:selected{background:#1a73e8; color:white;}
         """)
         self.entry.setCompleter(self.completer)
         self.entry.returnPressed.connect(self._send)
@@ -145,7 +146,6 @@ class ChatTab(QWidget):
         bl.addWidget(self.entry)
         bl.addWidget(btn)
         root.addWidget(bar)
-
         self.entry.setFocus()
         QTimer.singleShot(400, self._welcome)
 
@@ -179,28 +179,32 @@ class TaskTab(QWidget):
         root.setContentsMargins(12, 12, 12, 12)
         root.setSpacing(10)
 
-        # Title
         title = QLabel("📝  Task Reminder")
         title.setFont(QFont("Helvetica", 15, QFont.Bold))
-        title.setStyleSheet("color:#1a73e8; background:transparent;")
+        title.setStyleSheet("color:#000000; background:transparent;")
         root.addWidget(title)
 
-        # Task name input
+        # Task name
+        name_lbl = QLabel("Task Name:")
+        name_lbl.setFont(QFont("Helvetica", 11, QFont.Bold))
+        name_lbl.setStyleSheet("color:#000000; background:transparent;")
+        root.addWidget(name_lbl)
+
         self.task_input = QLineEdit()
         self.task_input.setPlaceholderText("Enter task name...")
         self.task_input.setFont(QFont("Helvetica", 13))
         self.task_input.setFixedHeight(42)
         self.task_input.setStyleSheet("""
-            QLineEdit{background:#fff;color:#222;border:2px solid #90c0e8;border-radius:10px;padding:0 12px;}
+            QLineEdit{background:#fff; color:#000000; border:2px solid #90c0e8; border-radius:10px; padding:0 12px;}
             QLineEdit:focus{border:2px solid #1a73e8;}
         """)
         root.addWidget(self.task_input)
 
-        # Date/time picker
-        dt_label = QLabel("Due Date & Time:")
-        dt_label.setFont(QFont("Helvetica", 11))
-        dt_label.setStyleSheet("color:#333; background:transparent;")
-        root.addWidget(dt_label)
+        # Date/time
+        dt_lbl = QLabel("Due Date & Time:")
+        dt_lbl.setFont(QFont("Helvetica", 11, QFont.Bold))
+        dt_lbl.setStyleSheet("color:#000000; background:transparent;")
+        root.addWidget(dt_lbl)
 
         self.dt_picker = QDateTimeEdit()
         self.dt_picker.setDateTime(QDateTime.currentDateTime().addSecs(3600))
@@ -209,7 +213,7 @@ class TaskTab(QWidget):
         self.dt_picker.setFixedHeight(42)
         self.dt_picker.setFont(QFont("Helvetica", 13))
         self.dt_picker.setStyleSheet("""
-            QDateTimeEdit{background:#fff;color:#222;border:2px solid #90c0e8;border-radius:10px;padding:0 12px;}
+            QDateTimeEdit{background:#fff; color:#000000; border:2px solid #90c0e8; border-radius:10px; padding:0 12px;}
             QDateTimeEdit:focus{border:2px solid #1a73e8;}
         """)
         root.addWidget(self.dt_picker)
@@ -220,42 +224,43 @@ class TaskTab(QWidget):
         add_btn.setFont(QFont("Helvetica", 13, QFont.Bold))
         add_btn.setCursor(Qt.PointingHandCursor)
         add_btn.setStyleSheet("""
-            QPushButton{background:#1a73e8;color:#fff;border:none;border-radius:10px;}
+            QPushButton{background:#1a73e8; color:#fff; border:none; border-radius:10px;}
             QPushButton:hover{background:#1558b0;}
         """)
         add_btn.clicked.connect(self._add_task)
         root.addWidget(add_btn)
 
-        # Task list
-        list_label = QLabel("Your Tasks:")
-        list_label.setFont(QFont("Helvetica", 11, QFont.Bold))
-        list_label.setStyleSheet("color:#333; background:transparent;")
-        root.addWidget(list_label)
+        # Task list label
+        list_lbl = QLabel("Your Tasks:  (select a task to delete)")
+        list_lbl.setFont(QFont("Helvetica", 11, QFont.Bold))
+        list_lbl.setStyleSheet("color:#000000; background:transparent;")
+        root.addWidget(list_lbl)
 
+        # Task list
         self.task_list = QListWidget()
         self.task_list.setFont(QFont("Helvetica", 12))
         self.task_list.setStyleSheet("""
-            QListWidget{background:#fff;border:2px solid #90c0e8;border-radius:10px;padding:4px;}
-            QListWidget::item{padding:8px;border-bottom:1px solid #ddeeff;}
-            QListWidget::item:selected{background:#ddeeff;color:#1a73e8;}
+            QListWidget{background:#fff; color:#000000; border:2px solid #90c0e8; border-radius:10px; padding:4px;}
+            QListWidget::item{padding:8px; color:#000000; border-bottom:1px solid #ddeeff;}
+            QListWidget::item:selected{background:#ddeeff; color:#000000;}
         """)
         root.addWidget(self.task_list)
 
         # Delete button
-        del_btn = QPushButton("🗑  Delete Selected Task")
-        del_btn.setFixedHeight(40)
-        del_btn.setFont(QFont("Helvetica", 12))
+        del_btn = QPushButton("🗑️  Delete Selected Task")
+        del_btn.setFixedHeight(44)
+        del_btn.setFont(QFont("Helvetica", 13, QFont.Bold))
         del_btn.setCursor(Qt.PointingHandCursor)
         del_btn.setStyleSheet("""
-            QPushButton{background:#ff4444;color:#fff;border:none;border-radius:10px;}
-            QPushButton:hover{background:#cc0000;}
+            QPushButton{background:#e53935; color:#fff; border:none; border-radius:10px;}
+            QPushButton:hover{background:#b71c1c;}
         """)
         del_btn.clicked.connect(self._delete_task)
         root.addWidget(del_btn)
 
         self._refresh_list()
 
-        # Timer to check reminders every 30 seconds
+        # Check reminders every 30 seconds
         self.reminder_timer = QTimer()
         self.reminder_timer.timeout.connect(self._check_reminders)
         self.reminder_timer.start(30000)
@@ -269,41 +274,47 @@ class TaskTab(QWidget):
         if due_dt <= datetime.now():
             QMessageBox.warning(self, "Invalid Time", "Please select a future date and time!")
             return
-        task = {
-            "name": name,
-            "due": due_dt.strftime("%Y-%m-%d %H:%M"),
-            "reminded": False
-        }
+        task = {"name": name, "due": due_dt.strftime("%Y-%m-%d %H:%M"), "reminded": False}
         self.tasks.append(task)
         save_tasks(self.tasks)
         self.task_input.clear()
         self._refresh_list()
         QMessageBox.information(self, "Task Added ✅",
-            f'Task "{name}" added!\nYou will be reminded 2 hours before due time.')
+            f'"{name}" added!\n🔔 Reminder set 2 hours before due time.')
 
     def _delete_task(self):
         row = self.task_list.currentRow()
-        if row < 0:
-            QMessageBox.warning(self, "No Selection", "Please select a task to delete!")
+        if row < 0 or row >= len(self.tasks):
+            QMessageBox.warning(self, "No Selection", "Please select a task from the list to delete!")
             return
         task_name = self.tasks[row]["name"]
-        self.tasks.pop(row)
-        save_tasks(self.tasks)
-        self._refresh_list()
-        QMessageBox.information(self, "Deleted", f'Task "{task_name}" deleted!')
+        confirm = QMessageBox.question(self, "Confirm Delete",
+            f'Are you sure you want to delete:\n"{task_name}"?',
+            QMessageBox.Yes | QMessageBox.No)
+        if confirm == QMessageBox.Yes:
+            self.tasks.pop(row)
+            save_tasks(self.tasks)
+            self._refresh_list()
+            QMessageBox.information(self, "Deleted ✅", f'"{task_name}" has been deleted.')
 
     def _refresh_list(self):
         self.task_list.clear()
         if not self.tasks:
-            self.task_list.addItem("  No tasks yet. Add one above!")
+            item = QListWidgetItem("  No tasks yet. Add one above!")
+            item.setForeground(QColor("#000000"))
+            self.task_list.addItem(item)
             return
         for t in self.tasks:
             due = datetime.strptime(t["due"], "%Y-%m-%d %H:%M")
             now = datetime.now()
-            status = "✅" if due < now else "⏳"
+            status = "✅ Done" if due < now else "⏳ Pending"
             remind_time = due - timedelta(hours=2)
-            item_text = f'{status}  {t["name"]}\n     📅 Due: {due.strftime("%d %b %Y, %I:%M %p")}  |  🔔 Reminder: {remind_time.strftime("%I:%M %p")}'
-            self.task_list.addItem(item_text)
+            text = (f'{status}  —  {t["name"]}\n'
+                    f'     📅 Due: {due.strftime("%d %b %Y, %I:%M %p")}'
+                    f'   🔔 Remind at: {remind_time.strftime("%I:%M %p")}')
+            item = QListWidgetItem(text)
+            item.setForeground(QColor("#000000"))
+            self.task_list.addItem(item)
 
     def _check_reminders(self):
         now = datetime.now()
@@ -332,12 +343,12 @@ class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Service POC Bot")
-        self.resize(420, 660)
+        self.resize(420, 680)
         self.setWindowFlags(Qt.Window | Qt.WindowStaysOnTopHint)
         self.setStyleSheet("background:#ddeeff;")
 
         root = QVBoxLayout(self)
-        root.setContentsMargins(0,0,0,0)
+        root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
         # Header
@@ -345,10 +356,10 @@ class MainWindow(QWidget):
         hdr.setFixedHeight(56)
         hdr.setStyleSheet("background:#1a73e8;")
         hl = QHBoxLayout(hdr)
-        hl.setContentsMargins(14,0,14,0)
+        hl.setContentsMargins(14, 0, 14, 0)
         t = QLabel("💬  Service POC Bot")
         t.setFont(QFont("Helvetica", 14, QFont.Bold))
-        t.setStyleSheet("color:#fff; background:transparent;")
+        t.setStyleSheet("color:#ffffff; background:transparent;")
         b = QLabel("● always on top")
         b.setFont(QFont("Helvetica", 9))
         b.setStyleSheet("color:#a8d4ff; background:transparent;")
@@ -362,7 +373,7 @@ class MainWindow(QWidget):
         self.tabs.setFont(QFont("Helvetica", 12))
         self.tabs.setStyleSheet("""
             QTabWidget::pane{border:none; background:#ddeeff;}
-            QTabBar::tab{background:#b8d8f0; color:#333; padding:10px 24px;
+            QTabBar::tab{background:#b8d8f0; color:#000000; padding:10px 24px;
                          font-size:13px; border-top-left-radius:8px; border-top-right-radius:8px;}
             QTabBar::tab:selected{background:#1a73e8; color:#ffffff; font-weight:bold;}
             QTabBar::tab:hover{background:#90c0e8;}
