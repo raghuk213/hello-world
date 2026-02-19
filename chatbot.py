@@ -35,8 +35,8 @@ class ChatbotApp:
     def __init__(self, root):
         self.root = root
         self.root.title(BOT_NAME)
-        self.root.geometry("400x580+100+100")
-        self.root.resizable(True, True)
+        self.root.geometry("420x620+100+60")
+        self.root.minsize(380, 500)
         self.root.configure(bg="#2b2b2b")
         self.root.attributes("-topmost", True)
         self._build_ui()
@@ -44,16 +44,51 @@ class ChatbotApp:
 
     def _build_ui(self):
         # ── Top bar ──
-        top = tk.Frame(self.root, bg="#1a1a1a", height=40)
+        top = tk.Frame(self.root, bg="#1a1a1a", height=44)
         top.pack(fill=tk.X, side=tk.TOP)
         top.pack_propagate(False)
-        tk.Label(top, text="CharBot  |  always on top",
+        tk.Label(top, text="  CharBot  |  always on top",
                  bg="#1a1a1a", fg="#ffffff",
-                 font=("Helvetica", 12, "bold")).pack(side=tk.LEFT, padx=12, pady=8)
+                 font=("Helvetica", 12, "bold")).pack(side=tk.LEFT, pady=10)
 
-        # ── Chat display ──
+        # ── Input area FIRST (so it sticks to bottom) ──
+        bottom = tk.Frame(self.root, bg="#1a1a1a", height=60)
+        bottom.pack(fill=tk.X, side=tk.BOTTOM)
+        bottom.pack_propagate(False)
+
+        self.entry = tk.Entry(
+            bottom,
+            bg="#3c3c3c", fg="#ffffff",
+            font=("Helvetica", 13),
+            insertbackground="#ffffff",
+            relief=tk.FLAT, bd=0,
+            highlightthickness=2,
+            highlightcolor="#4a90e2",
+            highlightbackground="#555555"
+        )
+        self.entry.place(x=10, y=12, width=290, height=36)
+        self.entry.bind("<Return>", self._send)
+        self.entry.focus_set()
+
+        send = tk.Button(
+            bottom, text="Send",
+            bg="#4a90e2", fg="#ffffff",
+            font=("Helvetica", 12, "bold"),
+            relief=tk.FLAT,
+            cursor="hand2",
+            activebackground="#357abd",
+            activeforeground="#ffffff",
+            bd=0,
+            command=self._send
+        )
+        send.place(x=308, y=12, width=100, height=36)
+
+        # ── Chat display (fills remaining space) ──
         frame = tk.Frame(self.root, bg="#2b2b2b")
-        frame.pack(fill=tk.BOTH, expand=True, padx=6, pady=6)
+        frame.pack(fill=tk.BOTH, expand=True, padx=4, pady=4)
+
+        sb = tk.Scrollbar(frame)
+        sb.pack(side=tk.RIGHT, fill=tk.Y)
 
         self.chat = tk.Text(
             frame,
@@ -64,19 +99,15 @@ class ChatbotApp:
             state=tk.DISABLED,
             relief=tk.FLAT,
             bd=0,
-            padx=8,
-            pady=8,
+            padx=10,
+            pady=10,
             highlightthickness=0,
-            spacing1=2,
-            spacing2=2,
-            spacing3=8,
+            spacing3=10,
+            yscrollcommand=sb.set
         )
-        sb = tk.Scrollbar(frame, command=self.chat.yview, bg="#2b2b2b")
-        self.chat.configure(yscrollcommand=sb.set)
-        sb.pack(side=tk.RIGHT, fill=tk.Y)
         self.chat.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        sb.config(command=self.chat.yview)
 
-        # tags
         self.chat.tag_configure("bot_label",
             foreground="#7eb8f7", font=("Helvetica", 10, "bold"))
         self.chat.tag_configure("bot_text",
@@ -88,42 +119,9 @@ class ChatbotApp:
         self.chat.tag_configure("user_text",
             foreground="#ffffff", font=("Helvetica", 13),
             justify=tk.RIGHT, rmargin=10)
-        self.chat.tag_configure("divider",
-            foreground="#555555", font=("Helvetica", 6))
-
-        # ── Input area ──
-        bottom = tk.Frame(self.root, bg="#1a1a1a", pady=8)
-        bottom.pack(fill=tk.X, side=tk.BOTTOM)
-
-        self.entry = tk.Entry(
-            bottom,
-            bg="#3c3c3c", fg="#ffffff",
-            font=("Helvetica", 13),
-            insertbackground="#ffffff",
-            relief=tk.FLAT, bd=6,
-            highlightthickness=1,
-            highlightcolor="#4a90e2",
-            highlightbackground="#555555"
-        )
-        self.entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(10, 6), ipady=4)
-        self.entry.bind("<Return>", self._send)
-        self.entry.focus_set()
-
-        send = tk.Button(
-            bottom, text="Send",
-            bg="#4a90e2", fg="#ffffff",
-            font=("Helvetica", 12, "bold"),
-            relief=tk.FLAT, padx=16, pady=4,
-            cursor="hand2",
-            activebackground="#357abd",
-            activeforeground="#ffffff",
-            bd=0,
-            command=self._send
-        )
-        send.pack(side=tk.RIGHT, padx=(0, 10))
 
     def _welcome(self):
-        self._add_bot("Hi! I am CharBot.\nType any name and I will count its characters!\n\nTry typing:\n  Raghu\n  my name is Raghu\n  hello")
+        self._add_bot("Hi! I am CharBot.\nType any name and I will count its characters!\n\nTry:\n  Raghu\n  my name is Raghu\n  hello")
 
     def _send(self, event=None):
         text = self.entry.get().strip()
@@ -141,20 +139,16 @@ class ChatbotApp:
     def _add_bot(self, message):
         self.chat.configure(state=tk.NORMAL)
         self.chat.insert(tk.END, "CharBot\n", "bot_label")
-        self.chat.insert(tk.END, message + "\n", "bot_text")
-        self.chat.insert(tk.END, "\n", "divider")
+        self.chat.insert(tk.END, message + "\n\n", "bot_text")
         self.chat.configure(state=tk.DISABLED)
         self.chat.see(tk.END)
-        self.root.update_idletasks()
 
     def _add_user(self, message):
         self.chat.configure(state=tk.NORMAL)
         self.chat.insert(tk.END, "You\n", "user_label")
-        self.chat.insert(tk.END, message + "\n", "user_text")
-        self.chat.insert(tk.END, "\n", "divider")
+        self.chat.insert(tk.END, message + "\n\n", "user_text")
         self.chat.configure(state=tk.DISABLED)
         self.chat.see(tk.END)
-        self.root.update_idletasks()
 
 
 if __name__ == "__main__":
