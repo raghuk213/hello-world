@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import (
     QListWidgetItem, QMessageBox
 )
 from PyQt5.QtCore import Qt, QTimer, QDateTime
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QColor
 
 # ── DATA ─────────────────────────────────────────────────
 DATA = {
