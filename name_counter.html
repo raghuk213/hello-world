@@ -40,6 +40,21 @@
     input:focus {
       border-color: #4a90e2;
     }
+    button {
+      margin-top: 14px;
+      width: 100%;
+      padding: 12px;
+      font-size: 1rem;
+      background-color: #4a90e2;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #357abd;
+    }
     .result {
       margin-top: 20px;
       font-size: 1.1rem;
@@ -56,7 +71,8 @@
 <body>
   <div class="container">
     <h1>Name Character Counter</h1>
-    <input type="text" id="nameInput" placeholder="Enter your name..." onkeydown="if(event.key==='Enter') countChars()" />
+    <input type="text" id="nameInput" placeholder="Enter your name..." />
+    <button onclick="countChars()">Submit</button>
     <div class="result" id="result"></div>
   </div>
 
@@ -66,7 +82,7 @@
       const resultDiv = document.getElementById('result');
 
       if (name.length === 0) {
-        resultDiv.innerHTML = '';
+        resultDiv.innerHTML = '<p style="color:red;">Please enter a name!</p>';
         return;
       }
 
