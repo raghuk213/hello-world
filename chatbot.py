@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout,
     QLineEdit, QPushButton, QLabel, QScrollArea, QFrame,
     QCompleter, QTabWidget, QDateTimeEdit, QListWidget,
-    QListWidgetItem, QMessageBox
+    QListWidgetItem, QMessageBox, QTextEdit, QSplitter
 )
 from PyQt5.QtCore import Qt, QTimer, QDateTime
 from PyQt5.QtGui import QFont, QColor
@@ -23,6 +23,7 @@ DATA = {
 }
 ALL_KEYS = list(DATA.keys())
 TASKS_FILE = os.path.expanduser("~/Desktop/tasks.json")
+NOTES_FILE = os.path.expanduser("~/Desktop/raghav_notes.json")
 
 def load_tasks():
     if os.path.exists(TASKS_FILE):
@@ -33,6 +34,16 @@ def load_tasks():
 def save_tasks(tasks):
     with open(TASKS_FILE, "w") as f:
         json.dump(tasks, f)
+
+def load_notes():
+    if os.path.exists(NOTES_FILE):
+        with open(NOTES_FILE) as f:
+            return json.load(f)
+    return []
+
+def save_notes(notes):
+    with open(NOTES_FILE, "w") as f:
+        json.dump(notes, f)
 
 def get_response(user_text):
     text  = user_text.strip()
@@ -257,7 +268,6 @@ class TaskTab(QWidget):
         """)
         root.addWidget(self.task_list)
 
-        # Done + Delete buttons side by side
         btn_row = QHBoxLayout()
         btn_row.setSpacing(8)
 
@@ -278,11 +288,9 @@ class TaskTab(QWidget):
                               "QPushButton:hover{background:#b71c1c;}")
         del_btn.clicked.connect(self._delete_task)
         btn_row.addWidget(del_btn)
-
         root.addLayout(btn_row)
 
         self._refresh_list()
-
         self.reminder_timer = QTimer()
         self.reminder_timer.timeout.connect(self._check_reminders)
         self.reminder_timer.start(30000)
@@ -375,12 +383,171 @@ class TaskTab(QWidget):
             self._refresh_list()
 
 
+# ── NOTES TAB ────────────────────────────────────────────
+class NotesTab(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setStyleSheet("background:#ddeeff;")
+        self.notes = load_notes()
+        self.current_index = -1
+
+        root = QHBoxLayout(self)
+        root.setContentsMargins(10, 10, 10, 10)
+        root.setSpacing(10)
+
+        # ── Left panel: notes list ──
+        left = QVBoxLayout()
+        left.setSpacing(6)
+
+        lbl = QLabel("🗒️  My Notes")
+        lbl.setFont(QFont("Helvetica", 13, QFont.Bold))
+        lbl.setStyleSheet("color:#000000; background:transparent;")
+        left.addWidget(lbl)
+
+        self.notes_list = QListWidget()
+        self.notes_list.setFixedWidth(140)
+        self.notes_list.setFont(QFont("Helvetica", 11))
+        self.notes_list.setStyleSheet("""
+            QListWidget{background:#fff; color:#000000; border:2px solid #90c0e8; border-radius:10px; padding:4px;}
+            QListWidget::item{padding:6px; color:#000000; border-bottom:1px solid #ddeeff;}
+            QListWidget::item:selected{background:#1a73e8; color:#ffffff;}
+        """)
+        self.notes_list.currentRowChanged.connect(self._load_note)
+        left.addWidget(self.notes_list)
+
+        new_btn = QPushButton("➕ New Note")
+        new_btn.setFixedHeight(38)
+        new_btn.setFont(QFont("Helvetica", 11, QFont.Bold))
+        new_btn.setCursor(Qt.PointingHandCursor)
+        new_btn.setStyleSheet("QPushButton{background:#1a73e8;color:#fff;border:none;border-radius:8px;}"
+                              "QPushButton:hover{background:#1558b0;}")
+        new_btn.clicked.connect(self._new_note)
+        left.addWidget(new_btn)
+
+        del_btn = QPushButton("🗑️ Delete")
+        del_btn.setFixedHeight(38)
+        del_btn.setFont(QFont("Helvetica", 11, QFont.Bold))
+        del_btn.setCursor(Qt.PointingHandCursor)
+        del_btn.setStyleSheet("QPushButton{background:#e53935;color:#fff;border:none;border-radius:8px;}"
+                              "QPushButton:hover{background:#b71c1c;}")
+        del_btn.clicked.connect(self._delete_note)
+        left.addWidget(del_btn)
+
+        root.addLayout(left)
+
+        # ── Right panel: editor ──
+        right = QVBoxLayout()
+        right.setSpacing(6)
+
+        self.title_input = QLineEdit()
+        self.title_input.setPlaceholderText("Note title...")
+        self.title_input.setFont(QFont("Helvetica", 13, QFont.Bold))
+        self.title_input.setFixedHeight(40)
+        self.title_input.setStyleSheet("""
+            QLineEdit{background:#fff; color:#000000; border:2px solid #90c0e8; border-radius:8px; padding:0 10px;}
+            QLineEdit:focus{border:2px solid #1a73e8;}
+        """)
+        self.title_input.textChanged.connect(self._auto_save)
+        right.addWidget(self.title_input)
+
+        self.text_editor = QTextEdit()
+        self.text_editor.setPlaceholderText("Start writing your note here...")
+        self.text_editor.setFont(QFont("Helvetica", 13))
+        self.text_editor.setStyleSheet("""
+            QTextEdit{background:#ffffff; color:#000000; border:2px solid #90c0e8; border-radius:8px; padding:8px;}
+            QTextEdit:focus{border:2px solid #1a73e8;}
+        """)
+        self.text_editor.textChanged.connect(self._auto_save)
+        right.addWidget(self.text_editor)
+
+        # Save indicator
+        self.save_lbl = QLabel("💾 All notes saved automatically")
+        self.save_lbl.setFont(QFont("Helvetica", 9))
+        self.save_lbl.setStyleSheet("color:#2e7d32; background:transparent;")
+        right.addWidget(self.save_lbl)
+
+        root.addLayout(right)
+
+        self._refresh_list()
+        # Auto-save timer
+        self.save_timer = QTimer()
+        self.save_timer.setSingleShot(True)
+        self.save_timer.timeout.connect(self._save_current)
+
+    def _refresh_list(self):
+        self.notes_list.clear()
+        for n in self.notes:
+            title = n.get("title") or "Untitled"
+            item = QListWidgetItem(title)
+            item.setForeground(QColor("#000000"))
+            self.notes_list.addItem(item)
+
+    def _new_note(self):
+        # Save current before creating new
+        self._save_current()
+        note = {"title": "New Note", "content": "", "created": datetime.now().strftime("%Y-%m-%d %H:%M")}
+        self.notes.append(note)
+        save_notes(self.notes)
+        self._refresh_list()
+        self.current_index = len(self.notes) - 1
+        self.notes_list.setCurrentRow(self.current_index)
+        self.title_input.setText("New Note")
+        self.text_editor.setPlainText("")
+        self.title_input.setFocus()
+        self.title_input.selectAll()
+
+    def _load_note(self, row):
+        self._save_current()
+        if row < 0 or row >= len(self.notes):
+            return
+        self.current_index = row
+        note = self.notes[row]
+        self.title_input.blockSignals(True)
+        self.text_editor.blockSignals(True)
+        self.title_input.setText(note.get("title", ""))
+        self.text_editor.setPlainText(note.get("content", ""))
+        self.title_input.blockSignals(False)
+        self.text_editor.blockSignals(False)
+
+    def _auto_save(self):
+        self.save_lbl.setText("✏️ Editing...")
+        self.save_lbl.setStyleSheet("color:#e65100; background:transparent;")
+        self.save_timer.start(800)
+
+    def _save_current(self):
+        if self.current_index < 0 or self.current_index >= len(self.notes):
+            return
+        self.notes[self.current_index]["title"] = self.title_input.text() or "Untitled"
+        self.notes[self.current_index]["content"] = self.text_editor.toPlainText()
+        save_notes(self.notes)
+        self._refresh_list()
+        self.notes_list.setCurrentRow(self.current_index)
+        self.save_lbl.setText("💾 Saved!")
+        self.save_lbl.setStyleSheet("color:#2e7d32; background:transparent;")
+
+    def _delete_note(self):
+        row = self.notes_list.currentRow()
+        if row < 0 or row >= len(self.notes):
+            show_popup(self, "No Selection", "Please select a note to delete!", "warn")
+            return
+        title = self.notes[row].get("title", "Untitled")
+        result = show_popup(self, "Confirm Delete",
+            f'Delete note:\n"{title}"?', "question")
+        if result == QMessageBox.Yes:
+            self.notes.pop(row)
+            save_notes(self.notes)
+            self.current_index = -1
+            self.title_input.clear()
+            self.text_editor.clear()
+            self._refresh_list()
+
+
 # ── MAIN WINDOW ──────────────────────────────────────────
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Service POC Bot")
-        self.resize(420, 700)
+        self.setWindowTitle("Raghav Chatbot")
+        self.resize(460, 720)
         self.setWindowFlags(Qt.Window | Qt.WindowStaysOnTopHint)
         self.setStyleSheet("background:#ddeeff;")
 
@@ -388,12 +555,13 @@ class MainWindow(QWidget):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
+        # Header
         hdr = QFrame()
         hdr.setFixedHeight(56)
         hdr.setStyleSheet("background:#1a73e8;")
         hl = QHBoxLayout(hdr)
         hl.setContentsMargins(14, 0, 14, 0)
-        t = QLabel("💬  Service POC Bot")
+        t = QLabel("🤖  Raghav Chatbot")
         t.setFont(QFont("Helvetica", 14, QFont.Bold))
         t.setStyleSheet("color:#ffffff; background:transparent;")
         b = QLabel("● always on top")
@@ -404,17 +572,19 @@ class MainWindow(QWidget):
         hl.addWidget(b)
         root.addWidget(hdr)
 
+        # Tabs
         self.tabs = QTabWidget()
         self.tabs.setFont(QFont("Helvetica", 12))
         self.tabs.setStyleSheet("""
             QTabWidget::pane{border:none; background:#ddeeff;}
-            QTabBar::tab{background:#b8d8f0; color:#000000; padding:10px 24px;
-                         font-size:13px; border-top-left-radius:8px; border-top-right-radius:8px;}
+            QTabBar::tab{background:#b8d8f0; color:#000000; padding:10px 18px;
+                         font-size:12px; border-top-left-radius:8px; border-top-right-radius:8px;}
             QTabBar::tab:selected{background:#1a73e8; color:#ffffff; font-weight:bold;}
             QTabBar::tab:hover{background:#90c0e8;}
         """)
-        self.tabs.addTab(ChatTab(), "💬  Chat")
-        self.tabs.addTab(TaskTab(), "📝  Tasks")
+        self.tabs.addTab(ChatTab(),  "💬  Chat")
+        self.tabs.addTab(TaskTab(),  "📝  Tasks")
+        self.tabs.addTab(NotesTab(), "🗒️  Notes")
         root.addWidget(self.tabs)
 
 
