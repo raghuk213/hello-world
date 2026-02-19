@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Name Character Counter</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: #f0f4f8;
+    }
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 320px;
+    }
+    h1 {
+      margin-bottom: 20px;
+      color: #333;
+      font-size: 1.5rem;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      font-size: 1rem;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      box-sizing: border-box;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+    input:focus {
+      border-color: #4a90e2;
+    }
+    .result {
+      margin-top: 20px;
+      font-size: 1.1rem;
+      color: #555;
+      min-height: 30px;
+    }
+    .count {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #4a90e2;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Name Character Counter</h1>
+    <input type="text" id="nameInput" placeholder="Enter your name..." oninput="countChars()" />
+    <div class="result" id="result"></div>
+  </div>
+
+  <script>
+    function countChars() {
+      const name = document.getElementById('nameInput').value;
+      const resultDiv = document.getElementById('result');
+
+      if (name.length === 0) {
+        resultDiv.innerHTML = '';
+        return;
+      }
+
+      resultDiv.innerHTML = `
+        <p>Your name <strong>"${name}"</strong> has</p>
+        <div class="count">${name.length}</div>
+        <p>character${name.length !== 1 ? 's' : ''}</p>
+      `;
+    }
+  </script>
+</body>
+</html>
