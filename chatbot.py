@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout,
     QLineEdit, QPushButton, QLabel, QScrollArea, QFrame,
     QCompleter, QTabWidget, QDateTimeEdit, QListWidget,
-    QListWidgetItem, QMessageBox, QTextEdit, QSplitter, QStackedWidget
+    QListWidgetItem, QMessageBox, QTextEdit, QSplitter, QStackedWidget, QDialog, QDialogButtonBox
 )
 from PyQt5.QtCore import Qt, QTimer, QDateTime
 from PyQt5.QtGui import QFont, QColor
@@ -459,18 +459,27 @@ class TaskTab(QWidget):
         btn_row = QHBoxLayout()
         btn_row.setSpacing(8)
 
-        done_btn = QPushButton("✅  Mark as Done")
+        done_btn = QPushButton("✅ Done")
         done_btn.setFixedHeight(44)
-        done_btn.setFont(QFont("Helvetica", 12, QFont.Bold))
+        done_btn.setFont(QFont("Helvetica", 11, QFont.Bold))
         done_btn.setCursor(Qt.PointingHandCursor)
         done_btn.setStyleSheet("QPushButton{background:#2e7d32;color:#fff;border:none;border-radius:10px;}"
                                "QPushButton:hover{background:#1b5e20;}")
         done_btn.clicked.connect(self._mark_done)
         btn_row.addWidget(done_btn)
 
-        del_btn = QPushButton("🗑️  Delete Task")
+        edit_btn = QPushButton("✏️ Edit")
+        edit_btn.setFixedHeight(44)
+        edit_btn.setFont(QFont("Helvetica", 11, QFont.Bold))
+        edit_btn.setCursor(Qt.PointingHandCursor)
+        edit_btn.setStyleSheet("QPushButton{background:#f59e0b;color:#fff;border:none;border-radius:10px;}"
+                               "QPushButton:hover{background:#d97706;}")
+        edit_btn.clicked.connect(self._edit_task)
+        btn_row.addWidget(edit_btn)
+
+        del_btn = QPushButton("🗑️ Delete")
         del_btn.setFixedHeight(44)
-        del_btn.setFont(QFont("Helvetica", 12, QFont.Bold))
+        del_btn.setFont(QFont("Helvetica", 11, QFont.Bold))
         del_btn.setCursor(Qt.PointingHandCursor)
         del_btn.setStyleSheet("QPushButton{background:#e53935;color:#fff;border:none;border-radius:10px;}"
                               "QPushButton:hover{background:#b71c1c;}")
@@ -543,6 +552,102 @@ class TaskTab(QWidget):
             save_tasks(self.tasks)
             self._refresh_list()
             show_popup(self, "Deleted ✅", f'"{task_name}" has been deleted.')
+
+    def _edit_task(self):
+        from PyQt5.QtWidgets import QDialog, QDialogButtonBox
+        row = self.task_list.currentRow()
+        if row < 0 or row >= len(self.tasks):
+            show_popup(self, "No Selection", "Please select a task to edit!", "warn")
+            return
+
+        task = self.tasks[row]
+        due = datetime.strptime(task["due"], "%Y-%m-%d %H:%M")
+
+        # Create edit dialog
+        dialog = QDialog(self)
+        dialog.setWindowTitle(f"Edit Task: {task['name']}")
+        dialog.setFixedSize(360, 300)
+        dialog.setStyleSheet("background:#f7f7f8;")
+
+        layout = QVBoxLayout(dialog)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(10)
+
+        # Task name
+        lbl_name = QLabel("Task Name:")
+        lbl_name.setFont(QFont("Helvetica", 11, QFont.Bold))
+        lbl_name.setStyleSheet("color:#1a1a2e; background:transparent;")
+        layout.addWidget(lbl_name)
+
+        name_edit = QLineEdit(task["name"])
+        name_edit.setFont(QFont("Helvetica", 13))
+        name_edit.setFixedHeight(40)
+        name_edit.setStyleSheet("QLineEdit{background:#ffffff;color:#1a1a2e;border:1px solid #e0d9ff;border-radius:8px;padding:0 10px;}QLineEdit:focus{border:1px solid #7c3aed;}")
+        layout.addWidget(name_edit)
+
+        # Due date
+        lbl_due = QLabel("Due Date & Time:")
+        lbl_due.setFont(QFont("Helvetica", 11, QFont.Bold))
+        lbl_due.setStyleSheet("color:#1a1a2e; background:transparent;")
+        layout.addWidget(lbl_due)
+
+        dt_edit = QDateTimeEdit()
+        dt_edit.setDateTime(QDateTime.fromString(task["due"], "yyyy-MM-dd HH:mm"))
+        dt_edit.setDisplayFormat("dd-MM-yyyy  hh:mm AP")
+        dt_edit.setCalendarPopup(True)
+        dt_edit.setFixedHeight(40)
+        dt_edit.setFont(QFont("Helvetica", 13))
+        dt_edit.setStyleSheet("QDateTimeEdit{background:#ffffff;color:#1a1a2e;border:1px solid #e0d9ff;border-radius:8px;padding:0 10px;}QDateTimeEdit:focus{border:1px solid #7c3aed;}")
+        layout.addWidget(dt_edit)
+
+        # Reminder
+        lbl_remind = QLabel("Remind me before:")
+        lbl_remind.setFont(QFont("Helvetica", 11, QFont.Bold))
+        lbl_remind.setStyleSheet("color:#1a1a2e; background:transparent;")
+        layout.addWidget(lbl_remind)
+
+        from PyQt5.QtWidgets import QComboBox
+        remind_options = ["15 minutes before","30 minutes before","1 hour before","2 hours before","3 hours before","6 hours before","1 day before"]
+        remind_map = {"15 minutes before":15,"30 minutes before":30,"1 hour before":60,"2 hours before":120,"3 hours before":180,"6 hours before":360,"1 day before":1440}
+        remind_rev = {v:k for k,v in remind_map.items()}
+
+        combo = QComboBox()
+        combo.addItems(remind_options)
+        combo.setFixedHeight(40)
+        combo.setFont(QFont("Helvetica", 12))
+        combo.setStyleSheet("QComboBox{background:#ffffff;color:#1a1a2e;border:1px solid #e0d9ff;border-radius:8px;padding:0 10px;}QComboBox QAbstractItemView{background:#ffffff;color:#1a1a2e;selection-background-color:#ede9fe;}")
+        cur_mins = task.get("remind_mins", 60)
+        cur_label = remind_rev.get(cur_mins, "1 hour before")
+        combo.setCurrentText(cur_label)
+        layout.addWidget(combo)
+
+        # Save / Cancel buttons
+        btns = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
+        btns.setStyleSheet("""
+            QPushButton{background:qlineargradient(x1:0,y1:0,x2:1,y2:1,stop:0 #7c3aed,stop:1 #4f46e5);
+                color:#ffffff;border:none;border-radius:8px;padding:6px 20px;font-weight:bold;}
+            QPushButton:hover{background:#6d28d9;}
+        """)
+        btns.accepted.connect(dialog.accept)
+        btns.rejected.connect(dialog.reject)
+        layout.addWidget(btns)
+
+        if dialog.exec_() == QDialog.Accepted:
+            new_name = name_edit.text().strip()
+            new_due = dt_edit.dateTime().toPyDateTime()
+            if not new_name:
+                show_popup(self, "Error", "Task name cannot be empty!", "warn")
+                return
+            if new_due <= datetime.now():
+                show_popup(self, "Error", "Please select a future date and time!", "warn")
+                return
+            self.tasks[row]["name"] = new_name
+            self.tasks[row]["due"] = new_due.strftime("%Y-%m-%d %H:%M")
+            self.tasks[row]["remind_mins"] = remind_map.get(combo.currentText(), 60)
+            self.tasks[row]["reminded"] = False  # reset reminder
+            save_tasks(self.tasks)
+            self._refresh_list()
+            show_popup(self, "Updated ✅", f'Task "{new_name}" updated successfully!')
 
     def _refresh_list(self):
         self.task_list.clear()
@@ -693,6 +798,102 @@ class NotesTab(QWidget):
         self.save_timer = QTimer()
         self.save_timer.setSingleShot(True)
         self.save_timer.timeout.connect(self._save_current)
+
+    def _edit_task(self):
+        from PyQt5.QtWidgets import QDialog, QDialogButtonBox
+        row = self.task_list.currentRow()
+        if row < 0 or row >= len(self.tasks):
+            show_popup(self, "No Selection", "Please select a task to edit!", "warn")
+            return
+
+        task = self.tasks[row]
+        due = datetime.strptime(task["due"], "%Y-%m-%d %H:%M")
+
+        # Create edit dialog
+        dialog = QDialog(self)
+        dialog.setWindowTitle(f"Edit Task: {task['name']}")
+        dialog.setFixedSize(360, 300)
+        dialog.setStyleSheet("background:#f7f7f8;")
+
+        layout = QVBoxLayout(dialog)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(10)
+
+        # Task name
+        lbl_name = QLabel("Task Name:")
+        lbl_name.setFont(QFont("Helvetica", 11, QFont.Bold))
+        lbl_name.setStyleSheet("color:#1a1a2e; background:transparent;")
+        layout.addWidget(lbl_name)
+
+        name_edit = QLineEdit(task["name"])
+        name_edit.setFont(QFont("Helvetica", 13))
+        name_edit.setFixedHeight(40)
+        name_edit.setStyleSheet("QLineEdit{background:#ffffff;color:#1a1a2e;border:1px solid #e0d9ff;border-radius:8px;padding:0 10px;}QLineEdit:focus{border:1px solid #7c3aed;}")
+        layout.addWidget(name_edit)
+
+        # Due date
+        lbl_due = QLabel("Due Date & Time:")
+        lbl_due.setFont(QFont("Helvetica", 11, QFont.Bold))
+        lbl_due.setStyleSheet("color:#1a1a2e; background:transparent;")
+        layout.addWidget(lbl_due)
+
+        dt_edit = QDateTimeEdit()
+        dt_edit.setDateTime(QDateTime.fromString(task["due"], "yyyy-MM-dd HH:mm"))
+        dt_edit.setDisplayFormat("dd-MM-yyyy  hh:mm AP")
+        dt_edit.setCalendarPopup(True)
+        dt_edit.setFixedHeight(40)
+        dt_edit.setFont(QFont("Helvetica", 13))
+        dt_edit.setStyleSheet("QDateTimeEdit{background:#ffffff;color:#1a1a2e;border:1px solid #e0d9ff;border-radius:8px;padding:0 10px;}QDateTimeEdit:focus{border:1px solid #7c3aed;}")
+        layout.addWidget(dt_edit)
+
+        # Reminder
+        lbl_remind = QLabel("Remind me before:")
+        lbl_remind.setFont(QFont("Helvetica", 11, QFont.Bold))
+        lbl_remind.setStyleSheet("color:#1a1a2e; background:transparent;")
+        layout.addWidget(lbl_remind)
+
+        from PyQt5.QtWidgets import QComboBox
+        remind_options = ["15 minutes before","30 minutes before","1 hour before","2 hours before","3 hours before","6 hours before","1 day before"]
+        remind_map = {"15 minutes before":15,"30 minutes before":30,"1 hour before":60,"2 hours before":120,"3 hours before":180,"6 hours before":360,"1 day before":1440}
+        remind_rev = {v:k for k,v in remind_map.items()}
+
+        combo = QComboBox()
+        combo.addItems(remind_options)
+        combo.setFixedHeight(40)
+        combo.setFont(QFont("Helvetica", 12))
+        combo.setStyleSheet("QComboBox{background:#ffffff;color:#1a1a2e;border:1px solid #e0d9ff;border-radius:8px;padding:0 10px;}QComboBox QAbstractItemView{background:#ffffff;color:#1a1a2e;selection-background-color:#ede9fe;}")
+        cur_mins = task.get("remind_mins", 60)
+        cur_label = remind_rev.get(cur_mins, "1 hour before")
+        combo.setCurrentText(cur_label)
+        layout.addWidget(combo)
+
+        # Save / Cancel buttons
+        btns = QDialogButtonBox(QDialogButtonBox.Save | QDialogButtonBox.Cancel)
+        btns.setStyleSheet("""
+            QPushButton{background:qlineargradient(x1:0,y1:0,x2:1,y2:1,stop:0 #7c3aed,stop:1 #4f46e5);
+                color:#ffffff;border:none;border-radius:8px;padding:6px 20px;font-weight:bold;}
+            QPushButton:hover{background:#6d28d9;}
+        """)
+        btns.accepted.connect(dialog.accept)
+        btns.rejected.connect(dialog.reject)
+        layout.addWidget(btns)
+
+        if dialog.exec_() == QDialog.Accepted:
+            new_name = name_edit.text().strip()
+            new_due = dt_edit.dateTime().toPyDateTime()
+            if not new_name:
+                show_popup(self, "Error", "Task name cannot be empty!", "warn")
+                return
+            if new_due <= datetime.now():
+                show_popup(self, "Error", "Please select a future date and time!", "warn")
+                return
+            self.tasks[row]["name"] = new_name
+            self.tasks[row]["due"] = new_due.strftime("%Y-%m-%d %H:%M")
+            self.tasks[row]["remind_mins"] = remind_map.get(combo.currentText(), 60)
+            self.tasks[row]["reminded"] = False  # reset reminder
+            save_tasks(self.tasks)
+            self._refresh_list()
+            show_popup(self, "Updated ✅", f'Task "{new_name}" updated successfully!')
 
     def _refresh_list(self):
         self.notes_list.clear()
