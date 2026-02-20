@@ -92,10 +92,10 @@ def get_response(user_text):
 POPUP_STYLE = """
     QMessageBox { background-color: #1a1a3e; }
     QLabel { color: #ffffff; font-size: 13px; font-family: Helvetica; }
-    QPushButton { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #6a00ff,stop:1 #00d4ff);
+    QPushButton { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #6a00ff,stop:1 #5aabff);
                   color: #ffffff; border-radius: 8px;
                   padding: 6px 20px; font-size: 13px; font-weight: bold; min-width: 70px; }
-    QPushButton:hover { background: #00d4ff; color: #000000; }
+    QPushButton:hover { background: #5aabff; color: #000000; }
 """
 
 def show_popup(parent, title, message, kind="info"):
@@ -123,14 +123,14 @@ class Bubble(QFrame):
         box.setMaximumWidth(300)
         if is_bot:
             box.setStyleSheet("""
-                background: rgba(0,212,255,0.08);
+                background: rgba(90,171,255,0.1);
                 border-radius: 18px;
-                border: 1px solid rgba(0,212,255,0.3);
+                border: 1px solid rgba(90,171,255,0.25);
             """)
         else:
             box.setStyleSheet("""
                 background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
-                    stop:0 #6a00ff, stop:1 #00d4ff);
+                    stop:0 #3a5bcc, stop:1 #5aabff);
                 border-radius: 18px;
                 border: none;
             """)
@@ -139,7 +139,7 @@ class Bubble(QFrame):
         inner.setSpacing(4)
         ls = QLabel(sender)
         ls.setFont(QFont("Helvetica", 8, QFont.Bold))
-        ls.setStyleSheet(f"color:{'#00d4ff' if is_bot else 'rgba(255,255,255,0.7)'}; background:transparent; letter-spacing:1px;")
+        ls.setStyleSheet(f"color:{'#5aabff' if is_bot else 'rgba(255,255,255,0.7)'}; background:transparent; letter-spacing:1px;")
         inner.addWidget(ls)
         lm = QLabel(message)
         lm.setFont(QFont("Helvetica", 13))
@@ -170,7 +170,7 @@ class ChatTab(QWidget):
         self.scroll.setStyleSheet("""
             QScrollArea{background:transparent; border:none;}
             QScrollBar:vertical{background:rgba(255,255,255,0.05); width:4px; border-radius:2px;}
-            QScrollBar::handle:vertical{background:#00d4ff; border-radius:2px;}
+            QScrollBar::handle:vertical{background:#5aabff; border-radius:2px;}
         """)
         self.msg_widget = QWidget()
         self.msg_widget.setStyleSheet("background:transparent;")
@@ -185,7 +185,7 @@ class ChatTab(QWidget):
         bar.setFixedHeight(72)
         bar.setStyleSheet("""
             background: rgba(255,255,255,0.05);
-            border-top: 1px solid rgba(0,212,255,0.2);
+            border-top: 1px solid rgba(90,171,255,0.15);
         """)
         bl = QHBoxLayout(bar)
         bl.setContentsMargins(12, 12, 12, 12)
@@ -204,8 +204,8 @@ class ChatTab(QWidget):
                 padding:0 20px;
             }
             QLineEdit:focus{
-                border: 1px solid #00d4ff;
-                background: rgba(0,212,255,0.1);
+                border: 1px solid #5aabff;
+                background: rgba(90,171,255,0.15);
             }
         """)
         self.completer = QCompleter(ALL_SUGGESTIONS)
@@ -221,8 +221,8 @@ class ChatTab(QWidget):
                 padding: 4px;
             }
             QListView::item{ padding: 6px 10px; }
-            QListView::item:hover{ background: rgba(0,212,255,0.15); color: #00d4ff; }
-            QListView::item:selected{ background: rgba(0,212,255,0.25); color: #00d4ff; }
+            QListView::item:hover{ background: rgba(0,212,255,0.15); color: #5aabff; }
+            QListView::item:selected{ background: rgba(90,171,255,0.2); color: #5aabff; }
         """)
         self.entry.setCompleter(self.completer)
         self.entry.returnPressed.connect(self._send)
@@ -234,7 +234,7 @@ class ChatTab(QWidget):
         btn.setStyleSheet("""
             QPushButton{
                 background: qlineargradient(x1:0,y1:0,x2:1,y2:0,
-                    stop:0 #00d4ff, stop:1 #0099cc);
+                    stop:0 #5aabff, stop:1 #0099cc);
                 color:#000000;
                 border:none;
                 border-radius:23px;
@@ -243,7 +243,7 @@ class ChatTab(QWidget):
             }
             QPushButton:hover{
                 background: qlineargradient(x1:0,y1:0,x2:1,y2:0,
-                    stop:0 #00ffcc, stop:1 #00d4ff);
+                    stop:0 #a0d8ff, stop:1 #5aabff);
             }
         """)
         btn.clicked.connect(self._send)
@@ -299,8 +299,8 @@ class TaskTab(QWidget):
         self.task_input.setFont(QFont("Helvetica", 13))
         self.task_input.setFixedHeight(42)
         self.task_input.setStyleSheet("""
-            QLineEdit{background:rgba(255,255,255,0.07); color:#ffffff; border:1px solid rgba(0,212,255,0.3); border-radius:10px; padding:0 12px;}
-            QLineEdit:focus{border:1px solid #00d4ff; background:rgba(0,212,255,0.1);}
+            QLineEdit{background:rgba(255,255,255,0.07); color:#ffffff; border:1px solid rgba(90,171,255,0.25); border-radius:10px; padding:0 12px;}
+            QLineEdit:focus{border:1px solid #5aabff; background:rgba(90,171,255,0.1);}
         """)
         root.addWidget(self.task_input)
 
@@ -316,8 +316,8 @@ class TaskTab(QWidget):
         self.dt_picker.setFixedHeight(42)
         self.dt_picker.setFont(QFont("Helvetica", 13))
         self.dt_picker.setStyleSheet("""
-            QDateTimeEdit{background:rgba(255,255,255,0.07); color:#ffffff; border:1px solid rgba(0,212,255,0.3); border-radius:10px; padding:0 12px;}
-            QDateTimeEdit:focus{border:1px solid #00d4ff;}
+            QDateTimeEdit{background:rgba(255,255,255,0.07); color:#ffffff; border:1px solid rgba(90,171,255,0.25); border-radius:10px; padding:0 12px;}
+            QDateTimeEdit:focus{border:1px solid #5aabff;}
         """)
         root.addWidget(self.dt_picker)
 
@@ -326,8 +326,8 @@ class TaskTab(QWidget):
         add_btn.setFont(QFont("Helvetica", 13, QFont.Bold))
         add_btn.setCursor(Qt.PointingHandCursor)
         add_btn.setStyleSheet("""
-            QPushButton{background:qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #6a00ff,stop:1 #00d4ff);color:#ffffff;border:none;border-radius:10px;font-weight:bold;letter-spacing:1px;}
-            QPushButton:hover{background:qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #00d4ff,stop:1 #00ffcc);color:#000000;}
+            QPushButton{background:qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #6a00ff,stop:1 #5aabff);color:#ffffff;border:none;border-radius:10px;font-weight:bold;letter-spacing:1px;}
+            QPushButton:hover{background:qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #5aabff,stop:1 #a0d8ff);color:#000000;}
         """)
         add_btn.clicked.connect(self._add_task)
         root.addWidget(add_btn)
@@ -340,9 +340,9 @@ class TaskTab(QWidget):
         self.task_list = QListWidget()
         self.task_list.setFont(QFont("Helvetica", 12))
         self.task_list.setStyleSheet("""
-            QListWidget{background:rgba(255,255,255,0.05); color:#ffffff; border:1px solid rgba(0,212,255,0.2); border-radius:10px; padding:4px;}
+            QListWidget{background:rgba(255,255,255,0.05); color:#ffffff; border:1px solid rgba(90,171,255,0.2); border-radius:10px; padding:4px;}
             QListWidget::item{padding:8px; color:#ffffff; border-bottom:1px solid rgba(255,255,255,0.05);}
-            QListWidget::item:selected{background:rgba(0,212,255,0.15); color:#00d4ff;}
+            QListWidget::item:selected{background:rgba(90,171,255,0.15); color:#5aabff;}
         """)
         root.addWidget(self.task_list)
 
@@ -486,9 +486,9 @@ class NotesTab(QWidget):
         self.notes_list.setFixedWidth(140)
         self.notes_list.setFont(QFont("Helvetica", 11))
         self.notes_list.setStyleSheet("""
-            QListWidget{background:rgba(255,255,255,0.05); color:#ffffff; border:1px solid rgba(0,212,255,0.2); border-radius:10px; padding:4px;}
+            QListWidget{background:rgba(255,255,255,0.05); color:#ffffff; border:1px solid rgba(90,171,255,0.2); border-radius:10px; padding:4px;}
             QListWidget::item{padding:6px; color:#ffffff; border-bottom:1px solid rgba(255,255,255,0.05);}
-            QListWidget::item:selected{background:rgba(0,212,255,0.2); color:#00d4ff;}
+            QListWidget::item:selected{background:rgba(90,171,255,0.15); color:#5aabff;}
         """)
         self.notes_list.currentRowChanged.connect(self._load_note)
         left.addWidget(self.notes_list)
@@ -522,8 +522,8 @@ class NotesTab(QWidget):
         self.title_input.setFont(QFont("Helvetica", 13, QFont.Bold))
         self.title_input.setFixedHeight(40)
         self.title_input.setStyleSheet("""
-            QLineEdit{background:rgba(255,255,255,0.07); color:#ffffff; border:1px solid rgba(0,212,255,0.3); border-radius:8px; padding:0 10px;}
-            QLineEdit:focus{border:1px solid #00d4ff; background:rgba(0,212,255,0.1);}
+            QLineEdit{background:rgba(255,255,255,0.07); color:#ffffff; border:1px solid rgba(90,171,255,0.25); border-radius:8px; padding:0 10px;}
+            QLineEdit:focus{border:1px solid #5aabff; background:rgba(90,171,255,0.1);}
         """)
         self.title_input.textChanged.connect(self._auto_save)
         right.addWidget(self.title_input)
@@ -532,8 +532,8 @@ class NotesTab(QWidget):
         self.text_editor.setPlaceholderText("Start writing your note here...")
         self.text_editor.setFont(QFont("Helvetica", 13))
         self.text_editor.setStyleSheet("""
-            QTextEdit{background:rgba(255,255,255,0.05); color:#ffffff; border:1px solid rgba(0,212,255,0.2); border-radius:8px; padding:8px;}
-            QTextEdit:focus{border:1px solid #00d4ff; background:rgba(0,212,255,0.08);}
+            QTextEdit{background:rgba(255,255,255,0.05); color:#ffffff; border:1px solid rgba(90,171,255,0.2); border-radius:8px; padding:8px;}
+            QTextEdit:focus{border:1px solid #5aabff; background:rgba(0,212,255,0.08);}
         """)
         self.text_editor.textChanged.connect(self._auto_save)
         right.addWidget(self.text_editor)
@@ -541,7 +541,7 @@ class NotesTab(QWidget):
         # Save indicator
         self.save_lbl = QLabel("💾 All notes saved automatically")
         self.save_lbl.setFont(QFont("Helvetica", 9))
-        self.save_lbl.setStyleSheet("color:#00ff88; background:transparent;")
+        self.save_lbl.setStyleSheet("color:#7ddfb0; background:transparent;")
         right.addWidget(self.save_lbl)
 
         root.addLayout(right)
@@ -598,7 +598,7 @@ class NotesTab(QWidget):
 
     def _auto_save(self):
         self.save_lbl.setText("✏️ Editing...")
-        self.save_lbl.setStyleSheet("color:#ffaa00; background:transparent;")
+        self.save_lbl.setStyleSheet("color:#e8a050; background:transparent;")
         self.save_timer.start(800)
 
     def _save_current(self):
@@ -610,7 +610,7 @@ class NotesTab(QWidget):
         self._refresh_list()
         self.notes_list.setCurrentRow(self.current_index)
         self.save_lbl.setText("💾 Saved!")
-        self.save_lbl.setStyleSheet("color:#00ff88; background:transparent;")
+        self.save_lbl.setStyleSheet("color:#7ddfb0; background:transparent;")
 
     def _delete_note(self):
         row = self.notes_list.currentRow()
@@ -636,7 +636,7 @@ class MainWindow(QWidget):
         self.setWindowTitle("Raghav Chatbot")
         self.resize(460, 720)
         self.setWindowFlags(Qt.Window | Qt.WindowStaysOnTopHint)
-        self.setStyleSheet("background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #0f0c29, stop:1 #1a1a3e);")
+        self.setStyleSheet("background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #1c2340, stop:1 #1e2a50);")
 
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
