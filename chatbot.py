@@ -176,7 +176,7 @@ class SearchingBubble(QFrame):
         layout = QHBoxLayout(self)
         layout.setContentsMargins(8, 4, 8, 4)
         box = QFrame()
-        box.setMaximumWidth(280)
+        box.setMaximumWidth(300)
         box.setStyleSheet("background:#ffffff; border-radius:14px; border:1px solid #c0d8f0;")
         inner = QVBoxLayout(box)
         inner.setContentsMargins(12, 8, 12, 8)
@@ -188,10 +188,17 @@ class SearchingBubble(QFrame):
         self.lm = QLabel("🔍 Searching...")
         self.lm.setFont(QFont("Helvetica", 13))
         self.lm.setStyleSheet("color:#000000; background:transparent;")
+        self.lm.setWordWrap(True)
+        self.lm.setMaximumWidth(280)
         inner.addWidget(self.lm)
         layout.addWidget(box, alignment=Qt.AlignLeft)
         layout.addStretch()
         self.setStyleSheet("background:transparent; border:none;")
+
+    def update_text(self, text):
+        self.lm.setText(text)
+        self.lm.adjustSize()
+        self.adjustSize()
 
 # ── CHAT TAB ─────────────────────────────────────────────
 class ChatTab(QWidget):
@@ -263,7 +270,6 @@ class ChatTab(QWidget):
         if not text: return
         self.entry.clear()
         self._add("You", text, False)
-        # Create a status bubble with a mutable label we can update
         self.status_bubble = SearchingBubble()
         self.msg_layout.insertWidget(self.msg_layout.count() - 1, self.status_bubble)
         QTimer.singleShot(50, lambda: self.scroll.verticalScrollBar().setValue(
@@ -277,12 +283,11 @@ class ChatTab(QWidget):
         QTimer.singleShot(0, lambda r=response: self._finish(r))
 
     def _finish(self, msg):
-        # Replace searching bubble with real answer
+        # Simply update the text inside the existing bubble — no removal needed!
         if hasattr(self, "status_bubble") and self.status_bubble:
-            self.msg_layout.removeWidget(self.status_bubble)
-            self.status_bubble.setParent(None)
-            self.status_bubble = None
-        self._add("Raghav Bot", msg, True)
+            self.status_bubble.update_text(msg)
+            self.scroll.verticalScrollBar().setValue(
+                self.scroll.verticalScrollBar().maximum())
 
     def _bot(self, msg):
         self._add("Raghav Bot", msg, True)
