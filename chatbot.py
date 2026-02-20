@@ -169,36 +169,7 @@ class Bubble(QFrame):
         self.setStyleSheet("background:transparent; border:none;")
 
 
-# ── SEARCHING BUBBLE ─────────────────────────────────────
-class SearchingBubble(QFrame):
-    def __init__(self):
-        super().__init__()
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(8, 4, 8, 4)
-        box = QFrame()
-        box.setMaximumWidth(300)
-        box.setStyleSheet("background:#ffffff; border-radius:14px; border:1px solid #c0d8f0;")
-        inner = QVBoxLayout(box)
-        inner.setContentsMargins(12, 8, 12, 8)
-        inner.setSpacing(3)
-        ls = QLabel("Raghav Bot")
-        ls.setFont(QFont("Helvetica", 9, QFont.Bold))
-        ls.setStyleSheet("color:#1a73e8; background:transparent;")
-        inner.addWidget(ls)
-        self.lm = QLabel("🔍 Searching...")
-        self.lm.setFont(QFont("Helvetica", 13))
-        self.lm.setStyleSheet("color:#000000; background:transparent;")
-        self.lm.setWordWrap(True)
-        self.lm.setMaximumWidth(280)
-        inner.addWidget(self.lm)
-        layout.addWidget(box, alignment=Qt.AlignLeft)
-        layout.addStretch()
-        self.setStyleSheet("background:transparent; border:none;")
-
-    def update_text(self, text):
-        self.lm.setText(text)
-        self.lm.adjustSize()
-        self.adjustSize()
+# ── SEARCHING BUBBLE removed - using simple approach ─────
 
 # ── CHAT TAB ─────────────────────────────────────────────
 class ChatTab(QWidget):
@@ -270,24 +241,13 @@ class ChatTab(QWidget):
         if not text: return
         self.entry.clear()
         self._add("You", text, False)
-        self.status_bubble = SearchingBubble()
-        self.msg_layout.insertWidget(self.msg_layout.count() - 1, self.status_bubble)
-        QTimer.singleShot(50, lambda: self.scroll.verticalScrollBar().setValue(
-            self.scroll.verticalScrollBar().maximum()))
         threading.Thread(target=self._process, args=(text,), daemon=True).start()
 
     def _process(self, text):
         response = get_response(text)
         if response.startswith("Sorry"):
             response = web_search(text)
-        QTimer.singleShot(0, lambda r=response: self._finish(r))
-
-    def _finish(self, msg):
-        # Simply update the text inside the existing bubble — no removal needed!
-        if hasattr(self, "status_bubble") and self.status_bubble:
-            self.status_bubble.update_text(msg)
-            self.scroll.verticalScrollBar().setValue(
-                self.scroll.verticalScrollBar().maximum())
+        QTimer.singleShot(0, lambda r=response: self._bot(r))
 
     def _bot(self, msg):
         self._add("Raghav Bot", msg, True)
