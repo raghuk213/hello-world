@@ -118,49 +118,83 @@ class Bubble(QFrame):
     def __init__(self, sender, message, is_bot):
         super().__init__()
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(10, 4, 10, 4)
+        layout.setContentsMargins(12, 4, 12, 4)
         box = QFrame()
         box.setMaximumWidth(300)
         if is_bot:
             box.setStyleSheet("""
-                background: rgba(90,171,255,0.1);
+                background: #ede9fe;
                 border-radius: 18px;
-                border: 1px solid rgba(90,171,255,0.25);
+                border: none;
             """)
         else:
             box.setStyleSheet("""
-                background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
-                    stop:0 #3a5bcc, stop:1 #5aabff);
+                background: #f0f0f0;
                 border-radius: 18px;
                 border: none;
             """)
         inner = QVBoxLayout(box)
         inner.setContentsMargins(14, 10, 14, 10)
-        inner.setSpacing(4)
-        ls = QLabel(sender)
-        ls.setFont(QFont("Helvetica", 8, QFont.Bold))
-        ls.setStyleSheet(f"color:{'#5aabff' if is_bot else 'rgba(255,255,255,0.7)'}; background:transparent; letter-spacing:1px;")
-        inner.addWidget(ls)
+        inner.setSpacing(2)
         lm = QLabel(message)
         lm.setFont(QFont("Helvetica", 13))
-        lm.setStyleSheet("color:#ffffff; background:transparent;")
+        lm.setStyleSheet("color:#1a1a2e; background:transparent;")
         lm.setWordWrap(True)
         inner.addWidget(lm)
         if is_bot:
-            layout.addWidget(box, alignment=Qt.AlignLeft)
-            layout.addStretch()
+            # Bot avatar circle
+            av = QLabel("✦")
+            av.setFixedSize(36, 36)
+            av.setAlignment(Qt.AlignCenter)
+            av.setFont(QFont("Helvetica", 14))
+            av.setStyleSheet("""
+                background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
+                    stop:0 #7c3aed, stop:1 #4f46e5);
+                border-radius: 18px;
+                color: white;
+            """)
+            row = QHBoxLayout()
+            row.setContentsMargins(0,0,0,0)
+            row.setSpacing(8)
+            row.addWidget(av, alignment=Qt.AlignTop)
+            row.addWidget(box, alignment=Qt.AlignLeft)
+            row.addStretch()
+            outer = QFrame()
+            outer.setStyleSheet("background:transparent; border:none;")
+            outer.setLayout(row)
+            main_layout = QVBoxLayout(self)
+            main_layout.setContentsMargins(0,0,0,0)
+            main_layout.addWidget(outer)
         else:
-            layout.addStretch()
-            layout.addWidget(box, alignment=Qt.AlignRight)
+            # User avatar circle
+            av = QLabel("R")
+            av.setFixedSize(36, 36)
+            av.setAlignment(Qt.AlignCenter)
+            av.setFont(QFont("Helvetica", 13, QFont.Bold))
+            av.setStyleSheet("""
+                background: #e8a050;
+                border-radius: 18px;
+                color: white;
+            """)
+            row = QHBoxLayout()
+            row.setContentsMargins(0,0,0,0)
+            row.setSpacing(8)
+            row.addStretch()
+            row.addWidget(box, alignment=Qt.AlignRight)
+            row.addWidget(av, alignment=Qt.AlignTop)
+            outer = QFrame()
+            outer.setStyleSheet("background:transparent; border:none;")
+            outer.setLayout(row)
+            main_layout = QVBoxLayout(self)
+            main_layout.setContentsMargins(0,0,0,0)
+            main_layout.addWidget(outer)
         self.setStyleSheet("background:transparent; border:none;")
-
-
 
 # ── CHAT TAB ─────────────────────────────────────────────
 class ChatTab(QWidget):
     def __init__(self):
         super().__init__()
-        self.setStyleSheet("background:transparent;")
+        self.setStyleSheet("background:#f7f7f8;")
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
@@ -168,12 +202,12 @@ class ChatTab(QWidget):
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setStyleSheet("""
-            QScrollArea{background:transparent; border:none;}
-            QScrollBar:vertical{background:rgba(255,255,255,0.05); width:4px; border-radius:2px;}
-            QScrollBar::handle:vertical{background:#5aabff; border-radius:2px;}
+            QScrollArea{background:#f7f7f8; border:none;}
+            QScrollBar:vertical{background:#eeeeee; width:4px; border-radius:2px;}
+            QScrollBar::handle:vertical{background:#c4b5fd; border-radius:2px;}
         """)
         self.msg_widget = QWidget()
-        self.msg_widget.setStyleSheet("background:transparent;")
+        self.msg_widget.setStyleSheet("background:#f7f7f8;")
         self.msg_layout = QVBoxLayout(self.msg_widget)
         self.msg_layout.setContentsMargins(6, 10, 6, 10)
         self.msg_layout.setSpacing(6)
@@ -277,7 +311,7 @@ class ChatTab(QWidget):
 class TaskTab(QWidget):
     def __init__(self):
         super().__init__()
-        self.setStyleSheet("background:transparent;")
+        self.setStyleSheet("background:#f7f7f8;")
         self.tasks = load_tasks()
 
         root = QVBoxLayout(self)
@@ -286,12 +320,12 @@ class TaskTab(QWidget):
 
         title = QLabel("📝  Task Reminder")
         title.setFont(QFont("Helvetica", 15, QFont.Bold))
-        title.setStyleSheet("color:#ffffff; background:transparent;")
+        title.setStyleSheet("color:#1a1a2e; background:transparent;")
         root.addWidget(title)
 
         name_lbl = QLabel("Task Name:")
         name_lbl.setFont(QFont("Helvetica", 11, QFont.Bold))
-        name_lbl.setStyleSheet("color:#ccddff; background:transparent;")
+        name_lbl.setStyleSheet("color:#555555; background:transparent;")
         root.addWidget(name_lbl)
 
         self.task_input = QLineEdit()
@@ -299,14 +333,14 @@ class TaskTab(QWidget):
         self.task_input.setFont(QFont("Helvetica", 13))
         self.task_input.setFixedHeight(42)
         self.task_input.setStyleSheet("""
-            QLineEdit{background:rgba(255,255,255,0.07); color:#ffffff; border:1px solid rgba(90,171,255,0.25); border-radius:10px; padding:0 12px;}
-            QLineEdit:focus{border:1px solid #5aabff; background:rgba(90,171,255,0.1);}
+            QLineEdit{background:#ffffff; color:#1a1a2e; border:1px solid #e0d9ff; border-radius:10px; padding:0 12px;}
+            QLineEdit:focus{border:1px solid #7c3aed; background:#faf8ff;}
         """)
         root.addWidget(self.task_input)
 
         dt_lbl = QLabel("Due Date & Time:")
         dt_lbl.setFont(QFont("Helvetica", 11, QFont.Bold))
-        dt_lbl.setStyleSheet("color:#ccddff; background:transparent;")
+        dt_lbl.setStyleSheet("color:#555555; background:transparent;")
         root.addWidget(dt_lbl)
 
         self.dt_picker = QDateTimeEdit()
@@ -316,8 +350,8 @@ class TaskTab(QWidget):
         self.dt_picker.setFixedHeight(42)
         self.dt_picker.setFont(QFont("Helvetica", 13))
         self.dt_picker.setStyleSheet("""
-            QDateTimeEdit{background:rgba(255,255,255,0.07); color:#ffffff; border:1px solid rgba(90,171,255,0.25); border-radius:10px; padding:0 12px;}
-            QDateTimeEdit:focus{border:1px solid #5aabff;}
+            QDateTimeEdit{background:#ffffff; color:#1a1a2e; border:1px solid #e0d9ff; border-radius:10px; padding:0 12px;}
+            QDateTimeEdit:focus{border:1px solid #7c3aed;}
         """)
         root.addWidget(self.dt_picker)
 
@@ -334,15 +368,15 @@ class TaskTab(QWidget):
 
         list_lbl = QLabel("Your Tasks:  (select a task then click action)")
         list_lbl.setFont(QFont("Helvetica", 11, QFont.Bold))
-        list_lbl.setStyleSheet("color:#ccddff; background:transparent;")
+        list_lbl.setStyleSheet("color:#555555; background:transparent;")
         root.addWidget(list_lbl)
 
         self.task_list = QListWidget()
         self.task_list.setFont(QFont("Helvetica", 12))
         self.task_list.setStyleSheet("""
-            QListWidget{background:rgba(255,255,255,0.05); color:#ffffff; border:1px solid rgba(90,171,255,0.2); border-radius:10px; padding:4px;}
-            QListWidget::item{padding:8px; color:#ffffff; border-bottom:1px solid rgba(255,255,255,0.05);}
-            QListWidget::item:selected{background:rgba(90,171,255,0.15); color:#5aabff;}
+            QListWidget{background:#ffffff; color:#1a1a2e; border:1px solid #e0d9ff; border-radius:10px; padding:4px;}
+            QListWidget::item{padding:8px; color:#1a1a2e; border-bottom:1px solid #f0f0f0;}
+            QListWidget::item:selected{background:#ede9fe; color:#4f46e5;}
         """)
         root.addWidget(self.task_list)
 
@@ -465,7 +499,7 @@ class TaskTab(QWidget):
 class NotesTab(QWidget):
     def __init__(self):
         super().__init__()
-        self.setStyleSheet("background:transparent;")
+        self.setStyleSheet("background:#f7f7f8;")
         self.notes = load_notes()
         self.current_index = -1
 
@@ -598,7 +632,7 @@ class NotesTab(QWidget):
 
     def _auto_save(self):
         self.save_lbl.setText("✏️ Editing...")
-        self.save_lbl.setStyleSheet("color:#e8a050; background:transparent;")
+        self.save_lbl.setStyleSheet("color:#d97706; background:transparent;")
         self.save_timer.start(800)
 
     def _save_current(self):
@@ -636,7 +670,7 @@ class MainWindow(QWidget):
         self.setWindowTitle("Raghav Chatbot")
         self.resize(460, 720)
         self.setWindowFlags(Qt.Window | Qt.WindowStaysOnTopHint)
-        self.setStyleSheet("background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #1c2340, stop:1 #1e2a50);")
+        self.setStyleSheet("background: #f7f7f8;")
 
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
