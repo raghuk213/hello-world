@@ -73,34 +73,45 @@ def get_response(user_text):
 
 def web_search(query):
     try:
-        # Use DuckDuckGo instant answer API (free, no key needed)
         encoded = urllib.parse.quote(query)
-        url = f"https://api.duckduckgo.com/?q={encoded}&format=json&no_redirect=1&no_html=1&skip_disambig=1"
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=8) as resp:
-            data = json.loads(resp.read().decode())
 
-        results = []
+        # Try Wikipedia API first — very reliable
+        wiki_url = (f"https://en.wikipedia.org/api/rest_v1/page/summary/"
+                    f"{urllib.parse.quote(query.replace(' ', '_'))}")
+        req = urllib.request.Request(wiki_url, headers={"User-Agent": "RaghavChatbot/1.0"})
+        try:
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                data = json.loads(resp.read().decode())
+                if data.get("extract"):
+                    extract = data["extract"][:500]
+                    title = data.get("title", query)
+                    return f"📖 {title}\n\n{extract}"
+        except Exception:
+            pass
 
-        # Abstract (main answer)
-        if data.get("AbstractText"):
-            results.append(data["AbstractText"][:400])
+        # Fallback: DuckDuckGo instant answers
+        ddg_url = f"https://api.duckduckgo.com/?q={encoded}&format=json&no_redirect=1&no_html=1"
+        req2 = urllib.request.Request(ddg_url, headers={"User-Agent": "Mozilla/5.0"})
+        try:
+            with urllib.request.urlopen(req2, timeout=8) as resp:
+                data = json.loads(resp.read().decode())
+                results = []
+                if data.get("Answer"):
+                    results.append(data["Answer"])
+                if data.get("AbstractText"):
+                    results.append(data["AbstractText"][:400])
+                for topic in data.get("RelatedTopics", [])[:2]:
+                    if isinstance(topic, dict) and topic.get("Text"):
+                        results.append(topic["Text"][:200])
+                if results:
+                    return "🌐 " + "\n\n".join(results[:2])
+        except Exception:
+            pass
 
-        # Answer (quick fact)
-        if data.get("Answer"):
-            results.append(data["Answer"])
-
-        # Related topics
-        for topic in data.get("RelatedTopics", [])[:3]:
-            if isinstance(topic, dict) and topic.get("Text"):
-                results.append(topic["Text"][:200])
-
-        if results:
-            return "🌐 " + "\n\n".join(results[:3])
-        else:
-            return f'No results found for "{query}".\nTry rephrasing your question.'
+        return (f'I searched for "{query}" but couldn\'t find a clear answer.\n'
+                f"Try asking differently or check your internet connection.")
     except Exception as e:
-        return f"❌ Search failed: {str(e)}\nPlease check your internet connection."
+        return f"❌ Error: {str(e)}"
 
 POPUP_STYLE = """
     QMessageBox { background-color: #ddeeff; }
@@ -156,6 +167,30 @@ class Bubble(QFrame):
             layout.addWidget(box, alignment=Qt.AlignRight)
         self.setStyleSheet("background:transparent; border:none;")
 
+
+# ── SEARCHING BUBBLE ─────────────────────────────────────
+class SearchingBubble(QFrame):
+    def __init__(self):
+        super().__init__()
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(8, 4, 8, 4)
+        box = QFrame()
+        box.setMaximumWidth(280)
+        box.setStyleSheet("background:#ffffff; border-radius:14px; border:1px solid #c0d8f0;")
+        inner = QVBoxLayout(box)
+        inner.setContentsMargins(12, 8, 12, 8)
+        inner.setSpacing(3)
+        ls = QLabel("Raghav Bot")
+        ls.setFont(QFont("Helvetica", 9, QFont.Bold))
+        ls.setStyleSheet("color:#1a73e8; background:transparent;")
+        inner.addWidget(ls)
+        self.lm = QLabel("🔍 Searching...")
+        self.lm.setFont(QFont("Helvetica", 13))
+        self.lm.setStyleSheet("color:#000000; background:transparent;")
+        inner.addWidget(self.lm)
+        layout.addWidget(box, alignment=Qt.AlignLeft)
+        layout.addStretch()
+        self.setStyleSheet("background:transparent; border:none;")
 
 # ── CHAT TAB ─────────────────────────────────────────────
 class ChatTab(QWidget):
@@ -227,26 +262,25 @@ class ChatTab(QWidget):
         if not text: return
         self.entry.clear()
         self._add("You", text, False)
-        self._add("Raghav Bot", "🔍 Searching...", True)
+        # Create a status bubble with a mutable label we can update
+        self.status_bubble = SearchingBubble()
+        self.msg_layout.insertWidget(self.msg_layout.count() - 1, self.status_bubble)
+        QTimer.singleShot(50, lambda: self.scroll.verticalScrollBar().setValue(
+            self.scroll.verticalScrollBar().maximum()))
         threading.Thread(target=self._process, args=(text,), daemon=True).start()
 
     def _process(self, text):
-        # First check POC data
         response = get_response(text)
         if response.startswith("Sorry"):
             response = web_search(text)
-        QTimer.singleShot(0, lambda r=response: self._replace_searching(r))
+        QTimer.singleShot(0, lambda r=response: self._finish(r))
 
-    def _replace_searching(self, msg):
-        # Find and remove the last "Searching..." bubble
-        for i in range(self.msg_layout.count() - 1, -1, -1):
-            item = self.msg_layout.itemAt(i)
-            if item and item.widget() and isinstance(item.widget(), Bubble):
-                w = item.widget()
-                self.msg_layout.removeWidget(w)
-                w.setParent(None)
-                w.deleteLater()
-                break
+    def _finish(self, msg):
+        # Replace searching bubble with real answer
+        if hasattr(self, "status_bubble") and self.status_bubble:
+            self.msg_layout.removeWidget(self.status_bubble)
+            self.status_bubble.setParent(None)
+            self.status_bubble = None
         self._add("Raghav Bot", msg, True)
 
     def _bot(self, msg):
