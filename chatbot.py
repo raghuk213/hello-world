@@ -91,7 +91,7 @@ def get_response(user_text):
 
 POPUP_STYLE = """
     QMessageBox { background-color: #1a1a3e; }
-    QLabel { color: #ffffff; font-size: 13px; font-family: Helvetica; }
+    QLabel { color: #1a1a2e; font-size: 13px; font-family: Helvetica; }
     QPushButton { background: qlineargradient(x1:0,y1:0,x2:1,y2:0,stop:0 #6a00ff,stop:1 #5aabff);
                   color: #ffffff; border-radius: 8px;
                   padding: 6px 20px; font-size: 13px; font-weight: bold; min-width: 70px; }
@@ -320,7 +320,7 @@ class TaskTab(QWidget):
 
         title = QLabel("📝  Task Reminder")
         title.setFont(QFont("Helvetica", 15, QFont.Bold))
-        title.setStyleSheet("color:#1a1a2e; background:transparent;")
+        title.setStyleSheet("color:#1a1a2e; background:transparent; font-size:15px;")
         root.addWidget(title)
 
         name_lbl = QLabel("Task Name:")
@@ -452,7 +452,7 @@ class TaskTab(QWidget):
         self.task_list.clear()
         if not self.tasks:
             item = QListWidgetItem("  No tasks yet. Add one above!")
-            item.setForeground(QColor("#000000"))
+            item.setForeground(QColor("#1a1a2e"))
             self.task_list.addItem(item)
             return
         for t in self.tasks:
@@ -469,7 +469,7 @@ class TaskTab(QWidget):
                     f'     📅 Due: {due.strftime("%d %b %Y, %I:%M %p")}'
                     f'   🔔 Remind at: {remind_time.strftime("%I:%M %p")}')
             item = QListWidgetItem(text)
-            item.setForeground(QColor("#000000"))
+            item.setForeground(QColor("#1a1a2e"))
             self.task_list.addItem(item)
 
     def _check_reminders(self):
@@ -520,8 +520,8 @@ class NotesTab(QWidget):
         self.notes_list.setFixedWidth(140)
         self.notes_list.setFont(QFont("Helvetica", 11))
         self.notes_list.setStyleSheet("""
-            QListWidget{background:rgba(255,255,255,0.05); color:#ffffff; border:1px solid rgba(90,171,255,0.2); border-radius:10px; padding:4px;}
-            QListWidget::item{padding:6px; color:#ffffff; border-bottom:1px solid rgba(255,255,255,0.05);}
+            QListWidget{background:rgba(255,255,255,0.05); color:#1a1a2e; border:1px solid rgba(90,171,255,0.2); border-radius:10px; padding:4px;}
+            QListWidget::item{padding:6px; color:#1a1a2e; border-bottom:1px solid rgba(255,255,255,0.05);}
             QListWidget::item:selected{background:rgba(90,171,255,0.15); color:#5aabff;}
         """)
         self.notes_list.currentRowChanged.connect(self._load_note)
@@ -556,7 +556,7 @@ class NotesTab(QWidget):
         self.title_input.setFont(QFont("Helvetica", 13, QFont.Bold))
         self.title_input.setFixedHeight(40)
         self.title_input.setStyleSheet("""
-            QLineEdit{background:rgba(255,255,255,0.07); color:#ffffff; border:1px solid rgba(90,171,255,0.25); border-radius:8px; padding:0 10px;}
+            QLineEdit{background:rgba(255,255,255,0.07); color:#1a1a2e; border:1px solid rgba(90,171,255,0.25); border-radius:8px; padding:0 10px;}
             QLineEdit:focus{border:1px solid #5aabff; background:rgba(90,171,255,0.1);}
         """)
         self.title_input.textChanged.connect(self._auto_save)
@@ -566,7 +566,7 @@ class NotesTab(QWidget):
         self.text_editor.setPlaceholderText("Start writing your note here...")
         self.text_editor.setFont(QFont("Helvetica", 13))
         self.text_editor.setStyleSheet("""
-            QTextEdit{background:rgba(255,255,255,0.05); color:#ffffff; border:1px solid rgba(90,171,255,0.2); border-radius:8px; padding:8px;}
+            QTextEdit{background:rgba(255,255,255,0.05); color:#1a1a2e; border:1px solid rgba(90,171,255,0.2); border-radius:8px; padding:8px;}
             QTextEdit:focus{border:1px solid #5aabff; background:rgba(0,212,255,0.08);}
         """)
         self.text_editor.textChanged.connect(self._auto_save)
@@ -591,7 +591,7 @@ class NotesTab(QWidget):
         for n in self.notes:
             title = n.get("title") or "Untitled"
             item = QListWidgetItem(title)
-            item.setForeground(QColor("#000000"))
+            item.setForeground(QColor("#1a1a2e"))
             self.notes_list.addItem(item)
 
     def _new_note(self):
@@ -684,7 +684,7 @@ class MainWindow(QWidget):
         hl.setContentsMargins(14, 0, 14, 0)
         t = QLabel("🤖  Raghav Chatbot")
         t.setFont(QFont("Helvetica", 14, QFont.Bold))
-        t.setStyleSheet("color:#ffffff; background:transparent;")
+        t.setStyleSheet("color:#1a1a2e; background:transparent;")
         b = QLabel("● always on top")
         b.setFont(QFont("Helvetica", 9))
         b.setStyleSheet("color:#a8d4ff; background:transparent;")
@@ -700,7 +700,7 @@ class MainWindow(QWidget):
             QTabWidget::pane{border:none; background:#ddeeff;}
             QTabBar::tab{background:#b8d8f0; color:#000000; padding:10px 18px;
                          font-size:12px; border-top-left-radius:8px; border-top-right-radius:8px;}
-            QTabBar::tab:selected{background:#1a73e8; color:#ffffff; font-weight:bold;}
+            QTabBar::tab:selected{background:#f7f7f8; color:#4f46e5; border-bottom: 2px solid #7c3aed; font-weight:bold;}
             QTabBar::tab:hover{background:#90c0e8;}
         """)
         self.tabs.addTab(ChatTab(),  "💬  Chat")
