@@ -307,31 +307,53 @@ class ChatTab(QWidget):
         QTimer.singleShot(300, lambda r=response: self._bot(r))
 
     def _bot(self, msg):
-        self.chat.append("")
-        # Bot label in purple
-        self.chat.setTextColor(QColor("#7c3aed"))
-        self.chat.setFontWeight(QFont.Bold)
-        self.chat.setFontPointSize(9)
-        self.chat.insertPlainText("Raghav Bot\n")
-        # Bot message in dark
-        self.chat.setTextColor(QColor("#1a1a2e"))
-        self.chat.setFontWeight(QFont.Normal)
-        self.chat.setFontPointSize(13)
-        self.chat.insertPlainText(msg + "\n")
+        # Left aligned bot message using HTML
+        safe_msg = msg.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\n","<br>")
+        html = f"""
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td width="70%" align="left">
+              <div style="
+                background:#ede9fe;
+                border-radius:14px;
+                padding:10px 14px;
+                margin:4px 0;
+                display:inline-block;
+              ">
+                <span style="color:#7c3aed; font-size:9pt; font-weight:bold;">Raghav Bot</span><br>
+                <span style="color:#1a1a2e; font-size:13pt;">{safe_msg}</span>
+              </div>
+            </td>
+            <td width="30%"></td>
+          </tr>
+        </table>
+        """
+        self.chat.append(html)
         self.chat.ensureCursorVisible()
 
     def _add_user(self, msg):
-        self.chat.append("")
-        # User label in orange
-        self.chat.setTextColor(QColor("#d97706"))
-        self.chat.setFontWeight(QFont.Bold)
-        self.chat.setFontPointSize(9)
-        self.chat.insertPlainText("You\n")
-        # User message in dark
-        self.chat.setTextColor(QColor("#1a1a2e"))
-        self.chat.setFontWeight(QFont.Normal)
-        self.chat.setFontPointSize(13)
-        self.chat.insertPlainText(msg + "\n")
+        # Right aligned user message using HTML
+        safe_msg = msg.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\n","<br>")
+        html = f"""
+        <table width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td width="30%"></td>
+            <td width="70%" align="right">
+              <div style="
+                background:#ddd6fe;
+                border-radius:14px;
+                padding:10px 14px;
+                margin:4px 0;
+                display:inline-block;
+              ">
+                <span style="color:#4f46e5; font-size:9pt; font-weight:bold;">You</span><br>
+                <span style="color:#1a1a2e; font-size:13pt;">{safe_msg}</span>
+              </div>
+            </td>
+          </tr>
+        </table>
+        """
+        self.chat.append(html)
         self.chat.ensureCursorVisible()
 
 # ── TASK TAB ─────────────────────────────────────────────
