@@ -1,6 +1,9 @@
 import sys
 import json
 import os
+import threading
+import urllib.request
+import urllib.parse
 from datetime import datetime, timedelta
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout,
@@ -64,6 +67,37 @@ def get_response(user_text):
         if lower == key.lower() or lower in key.lower() or key.lower() in lower:
             return f"📌 Service: {key}\n👤 POC: {DATA[key]}"
     return f'Sorry, couldn\'t find "{text}".\nType "list" to see all services.'
+
+def web_search(query):
+    try:
+        # Use DuckDuckGo instant answer API (free, no key needed)
+        encoded = urllib.parse.quote(query)
+        url = f"https://api.duckduckgo.com/?q={encoded}&format=json&no_redirect=1&no_html=1&skip_disambig=1"
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            data = json.loads(resp.read().decode())
+
+        results = []
+
+        # Abstract (main answer)
+        if data.get("AbstractText"):
+            results.append(data["AbstractText"][:400])
+
+        # Answer (quick fact)
+        if data.get("Answer"):
+            results.append(data["Answer"])
+
+        # Related topics
+        for topic in data.get("RelatedTopics", [])[:3]:
+            if isinstance(topic, dict) and topic.get("Text"):
+                results.append(topic["Text"][:200])
+
+        if results:
+            return "🌐 " + "\n\n".join(results[:3])
+        else:
+            return f'No results found for "{query}".\nTry rephrasing your question.'
+    except Exception as e:
+        return f"❌ Search failed: {str(e)}\nPlease check your internet connection."
 
 POPUP_STYLE = """
     QMessageBox { background-color: #ddeeff; }
@@ -151,7 +185,7 @@ class ChatTab(QWidget):
         bl.setSpacing(8)
 
         self.entry = QLineEdit()
-        self.entry.setPlaceholderText("Type a service name...")
+        self.entry.setPlaceholderText("Ask anything or type a service name...")
         self.entry.setFont(QFont("Helvetica", 13))
         self.entry.setFixedHeight(44)
         self.entry.setStyleSheet("""
@@ -183,17 +217,39 @@ class ChatTab(QWidget):
         QTimer.singleShot(400, self._welcome)
 
     def _welcome(self):
-        self._bot("Hi! 👋 I'm your Service POC Bot.\nType a service name to get POC details.\n\nType 'list' to see all services.")
+        self._bot("Hi! 👋 I'm Raghav Chatbot.\n\n🔍 Ask me anything — I'll search the internet!\n📋 Or type a service name to get POC details.\n📝 Type 'list' to see all services.")
 
     def _send(self):
         text = self.entry.text().strip()
         if not text: return
         self.entry.clear()
         self._add("You", text, False)
-        QTimer.singleShot(300, lambda: self._bot(get_response(text)))
+        self._bot("🔍 Searching...")
+        threading.Thread(target=self._process, args=(text,), daemon=True).start()
+
+    def _process(self, text):
+        # First check POC data
+        response = get_response(text)
+        if response.startswith("Sorry"):
+            # Not found in POC data — search internet
+            response = web_search(text)
+        QTimer.singleShot(0, lambda: self._update_last_bot(response))
+
+    def _update_last_bot(self, msg):
+        # Remove "Searching..." bubble and add real response
+        count = self.msg_layout.count()
+        for i in range(count - 1, -1, -1):
+            item = self.msg_layout.itemAt(i)
+            if item and item.widget():
+                widget = item.widget()
+                if isinstance(widget, Bubble):
+                    self.msg_layout.removeWidget(widget)
+                    widget.deleteLater()
+                    break
+        self._add("Raghav Bot", msg, True)
 
     def _bot(self, msg):
-        self._add("POC Bot", msg, True)
+        self._add("Raghav Bot", msg, True)
 
     def _add(self, sender, msg, is_bot):
         self.msg_layout.insertWidget(self.msg_layout.count()-1, Bubble(sender, msg, is_bot))
