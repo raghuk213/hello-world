@@ -312,14 +312,12 @@ class ChatTab(QWidget):
         self.chat.setTextColor(QColor("#7c3aed"))
         self.chat.setFontWeight(QFont.Bold)
         self.chat.setFontPointSize(9)
-        self.chat.insertPlainText("✦ Raghav Bot
-")
+        self.chat.insertPlainText("Raghav Bot\n")
         # Bot message in dark
         self.chat.setTextColor(QColor("#1a1a2e"))
         self.chat.setFontWeight(QFont.Normal)
         self.chat.setFontPointSize(13)
-        self.chat.insertPlainText(msg + "
-")
+        self.chat.insertPlainText(msg + "\n")
         self.chat.ensureCursorVisible()
 
     def _add_user(self, msg):
@@ -328,14 +326,12 @@ class ChatTab(QWidget):
         self.chat.setTextColor(QColor("#d97706"))
         self.chat.setFontWeight(QFont.Bold)
         self.chat.setFontPointSize(9)
-        self.chat.insertPlainText("  You
-")
+        self.chat.insertPlainText("You\n")
         # User message in dark
         self.chat.setTextColor(QColor("#1a1a2e"))
         self.chat.setFontWeight(QFont.Normal)
         self.chat.setFontPointSize(13)
-        self.chat.insertPlainText(msg + "
-")
+        self.chat.insertPlainText(msg + "\n")
         self.chat.ensureCursorVisible()
 
 # ── TASK TAB ─────────────────────────────────────────────
