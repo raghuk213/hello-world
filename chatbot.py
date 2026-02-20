@@ -42,9 +42,12 @@ def load_notes():
     if os.path.exists(NOTES_FILE):
         try:
             with open(NOTES_FILE) as f:
-                data = json.load(f)
-                return data if isinstance(data, list) else []
-        except (json.JSONDecodeError, ValueError):
+                text = f.read().strip()
+            if not text:
+                return []
+            data = json.loads(text)
+            return data if isinstance(data, list) else []
+        except Exception:
             return []
     return []
 
