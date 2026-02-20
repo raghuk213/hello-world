@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout,
     QLineEdit, QPushButton, QLabel, QScrollArea, QFrame,
     QCompleter, QTabWidget, QDateTimeEdit, QListWidget,
-    QListWidgetItem, QMessageBox, QTextEdit, QSplitter
+    QListWidgetItem, QMessageBox, QTextEdit, QSplitter, QStackedWidget
 )
 from PyQt5.QtCore import Qt, QTimer, QDateTime
 from PyQt5.QtGui import QFont, QColor
@@ -743,19 +743,50 @@ class MainWindow(QWidget):
         root.addWidget(hdr)
 
         # Tabs
-        self.tabs = QTabWidget()
-        self.tabs.setFont(QFont("Helvetica", 12))
-        self.tabs.setStyleSheet("""
-            QTabWidget::pane{border:none; background:#ddeeff;}
-            QTabBar::tab{background:#b8d8f0; color:#000000; padding:10px 18px;
-                         font-size:12px; border-top-left-radius:8px; border-top-right-radius:8px;}
-            QTabBar::tab:selected{background:#f7f7f8; color:#4f46e5; border-bottom: 2px solid #7c3aed; font-weight:bold;}
-            QTabBar::tab:hover{background:#90c0e8;}
-        """)
-        self.tabs.addTab(ChatTab(),  "💬  Chat")
-        self.tabs.addTab(TaskTab(),  "📝  Tasks")
-        self.tabs.addTab(NotesTab(), "🗒️  Notes")
-        root.addWidget(self.tabs)
+        # Floating pill buttons
+        btn_bar = QFrame()
+        btn_bar.setFixedHeight(56)
+        btn_bar.setStyleSheet("background:#f7f7f8; border-bottom:1px solid #eeeeee;")
+        btn_layout = QHBoxLayout(btn_bar)
+        btn_layout.setContentsMargins(16,8,16,8)
+        btn_layout.setSpacing(10)
+
+        self.stack = QStackedWidget()
+        self.stack.addWidget(ChatTab())
+        self.stack.addWidget(TaskTab())
+        self.stack.addWidget(NotesTab())
+
+        ACTIVE = "QPushButton{background:qlineargradient(x1:0,y1:0,x2:1,y2:1,stop:0 #7c3aed,stop:1 #4f46e5);color:#ffffff;border:none;border-radius:16px;padding:6px 18px;font-size:12px;font-weight:bold;}"
+        INACTIVE = "QPushButton{background:#eeeeee;color:#666666;border:none;border-radius:16px;padding:6px 18px;font-size:12px;font-weight:bold;}QPushButton:hover{background:#e0d9ff;color:#4f46e5;}"
+
+        self.b0 = QPushButton("💬  Chat")
+        self.b1 = QPushButton("📝  Tasks")
+        self.b2 = QPushButton("🗒️  Notes")
+
+        for b in [self.b0, self.b1, self.b2]:
+            b.setFixedHeight(34)
+            b.setCursor(Qt.PointingHandCursor)
+            b.setStyleSheet(INACTIVE)
+        self.b0.setStyleSheet(ACTIVE)
+
+        def switch(idx, A=ACTIVE, I=INACTIVE):
+            self.stack.setCurrentIndex(idx)
+            self.b0.setStyleSheet(A if idx==0 else I)
+            self.b1.setStyleSheet(A if idx==1 else I)
+            self.b2.setStyleSheet(A if idx==2 else I)
+
+        self.b0.clicked.connect(lambda: switch(0))
+        self.b1.clicked.connect(lambda: switch(1))
+        self.b2.clicked.connect(lambda: switch(2))
+
+        btn_layout.addStretch()
+        btn_layout.addWidget(self.b0)
+        btn_layout.addWidget(self.b1)
+        btn_layout.addWidget(self.b2)
+        btn_layout.addStretch()
+
+        root.addWidget(btn_bar)
+        root.addWidget(self.stack)
 
 
 if __name__ == "__main__":
