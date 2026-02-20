@@ -20,6 +20,8 @@ DATA = {
     "Warehouse Automation":                          "Anoop1 Nari",
     "Control Tower":                                 "Harishkumar Rp",
     "Rover":                                         "Harishkumar Rp",
+    "Platforms Dev":                                 "Amit42 Tiwari",
+    "Tops Team":                                     "kiran4.s@ril.com",
 }
 ALL_KEYS = list(DATA.keys())
 TASKS_FILE = os.path.expanduser("~/Desktop/tasks.json")
