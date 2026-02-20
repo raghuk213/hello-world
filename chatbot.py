@@ -459,7 +459,7 @@ class TaskTab(QWidget):
         btn_row = QHBoxLayout()
         btn_row.setSpacing(8)
 
-        done_btn = QPushButton("✅ Done")
+        done_btn = QPushButton("Done")
         done_btn.setFixedHeight(44)
         done_btn.setFont(QFont("Helvetica", 11, QFont.Bold))
         done_btn.setCursor(Qt.PointingHandCursor)
@@ -468,7 +468,7 @@ class TaskTab(QWidget):
         done_btn.clicked.connect(self._mark_done)
         btn_row.addWidget(done_btn)
 
-        edit_btn = QPushButton("✏️ Edit")
+        edit_btn = QPushButton("Edit")
         edit_btn.setFixedHeight(44)
         edit_btn.setFont(QFont("Helvetica", 11, QFont.Bold))
         edit_btn.setCursor(Qt.PointingHandCursor)
@@ -477,7 +477,7 @@ class TaskTab(QWidget):
         edit_btn.clicked.connect(self._edit_task)
         btn_row.addWidget(edit_btn)
 
-        del_btn = QPushButton("🗑️ Delete")
+        del_btn = QPushButton("Delete")
         del_btn.setFixedHeight(44)
         del_btn.setFont(QFont("Helvetica", 11, QFont.Bold))
         del_btn.setCursor(Qt.PointingHandCursor)
@@ -749,7 +749,7 @@ class NotesTab(QWidget):
         new_btn.clicked.connect(self._new_note)
         left.addWidget(new_btn)
 
-        del_btn = QPushButton("🗑️ Delete")
+        del_btn = QPushButton("Delete")
         del_btn.setFixedHeight(38)
         del_btn.setFont(QFont("Helvetica", 11, QFont.Bold))
         del_btn.setCursor(Qt.PointingHandCursor)
