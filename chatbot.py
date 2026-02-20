@@ -227,28 +227,26 @@ class ChatTab(QWidget):
         if not text: return
         self.entry.clear()
         self._add("You", text, False)
-        self._bot("🔍 Searching...")
+        self._add("Raghav Bot", "🔍 Searching...", True)
         threading.Thread(target=self._process, args=(text,), daemon=True).start()
 
     def _process(self, text):
         # First check POC data
         response = get_response(text)
         if response.startswith("Sorry"):
-            # Not found in POC data — search internet
             response = web_search(text)
-        QTimer.singleShot(0, lambda: self._update_last_bot(response))
+        QTimer.singleShot(0, lambda r=response: self._replace_searching(r))
 
-    def _update_last_bot(self, msg):
-        # Remove "Searching..." bubble and add real response
-        count = self.msg_layout.count()
-        for i in range(count - 1, -1, -1):
+    def _replace_searching(self, msg):
+        # Find and remove the last "Searching..." bubble
+        for i in range(self.msg_layout.count() - 1, -1, -1):
             item = self.msg_layout.itemAt(i)
-            if item and item.widget():
-                widget = item.widget()
-                if isinstance(widget, Bubble):
-                    self.msg_layout.removeWidget(widget)
-                    widget.deleteLater()
-                    break
+            if item and item.widget() and isinstance(item.widget(), Bubble):
+                w = item.widget()
+                self.msg_layout.removeWidget(w)
+                w.setParent(None)
+                w.deleteLater()
+                break
         self._add("Raghav Bot", msg, True)
 
     def _bot(self, msg):
