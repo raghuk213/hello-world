@@ -58,16 +58,32 @@ def get_response(user_text):
     text  = user_text.strip()
     lower = text.lower()
     if lower in ("hi", "hello", "hey"):
-        return "Hello! 👋 Type a service name to get POC details."
+        return "Hello! 👋 Type a service name or POC name to get details."
     if lower in ("bye", "goodbye"):
         return "Goodbye! 👋"
     if lower in ("help", "?"):
-        return "Type any service name.\n\nAvailable:\n" + "\n".join(f"• {k}" for k in ALL_KEYS)
+        return "Type any service name or POC name.\n\nAvailable services:\n" + "\n".join(f"• {k}" for k in ALL_KEYS)
     if lower in ("list", "show all", "all"):
         return "Available services:\n" + "\n".join(f"• {k}" for k in ALL_KEYS)
+
+    results = []
+
+    # Search by service name
     for key in ALL_KEYS:
         if lower == key.lower() or lower in key.lower() or key.lower() in lower:
-            return f"📌 Service: {key}\n👤 POC: {DATA[key]}"
+            results.append(f"📌 Service: {key}\n👤 POC: {DATA[key]}")
+
+    # Search by POC name/email
+    for key, poc in DATA.items():
+        if lower in poc.lower() or poc.lower() in lower:
+            # Avoid duplicates
+            entry = f"📌 Service: {key}\n👤 POC: {poc}"
+            if entry not in results:
+                results.append(entry)
+
+    if results:
+        return "\n\n".join(results)
+
     return f'Sorry, couldn\'t find "{text}".\nType "list" to see all services.'
 
 
