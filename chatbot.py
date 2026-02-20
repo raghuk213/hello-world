@@ -231,15 +231,16 @@ class ChatTab(QWidget):
         self.entry.setFixedHeight(46)
         self.entry.setStyleSheet("""
             QLineEdit{
-                background: rgba(255,255,255,0.07);
-                color:#ffffff;
-                border: 1px solid rgba(0,212,255,0.4);
-                border-radius:23px;
-                padding:0 20px;
+                background: #ffffff;
+                color: #000000;
+                border: 1px solid #d0d0d0;
+                border-radius: 23px;
+                padding: 0 20px;
             }
             QLineEdit:focus{
-                border: 1px solid #5aabff;
-                background: rgba(90,171,255,0.15);
+                background: #ffffff;
+                color: #000000;
+                border: 1px solid #7c3aed;
             }
         """)
         self.completer = QCompleter(ALL_SUGGESTIONS)
