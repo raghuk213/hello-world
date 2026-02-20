@@ -199,28 +199,34 @@ class ChatTab(QWidget):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
-        self.scroll = QScrollArea()
-        self.scroll.setWidgetResizable(True)
-        self.scroll.setStyleSheet("""
-            QScrollArea{background:#f7f7f8; border:none;}
-            QScrollBar:vertical{background:#eeeeee; width:4px; border-radius:2px;}
-            QScrollBar::handle:vertical{background:#c4b5fd; border-radius:2px;}
+        # Chat display using QTextEdit - most reliable on Mac
+        self.chat = QTextEdit()
+        self.chat.setReadOnly(True)
+        self.chat.setStyleSheet("""
+            QTextEdit {
+                background: #f7f7f8;
+                border: none;
+                padding: 10px;
+                font-size: 13px;
+                color: #000000;
+            }
+            QScrollBar:vertical {
+                background: #eeeeee;
+                width: 4px;
+                border-radius: 2px;
+            }
+            QScrollBar::handle:vertical {
+                background: #c4b5fd;
+                border-radius: 2px;
+            }
         """)
-        self.msg_widget = QWidget()
-        self.msg_widget.setStyleSheet("background:#f7f7f8;")
-        self.msg_layout = QVBoxLayout(self.msg_widget)
-        self.msg_layout.setContentsMargins(6, 10, 6, 10)
-        self.msg_layout.setSpacing(6)
-        self.msg_layout.addStretch()
-        self.scroll.setWidget(self.msg_widget)
-        root.addWidget(self.scroll)
+        self.chat.setFont(QFont("Helvetica", 13))
+        root.addWidget(self.chat)
 
+        # Input bar
         bar = QFrame()
         bar.setFixedHeight(72)
-        bar.setStyleSheet("""
-            background: rgba(255,255,255,0.05);
-            border-top: 1px solid rgba(90,171,255,0.15);
-        """)
+        bar.setStyleSheet("background:#ffffff; border-top:1px solid #eeeeee;")
         bl = QHBoxLayout(bar)
         bl.setContentsMargins(12, 12, 12, 12)
         bl.setSpacing(10)
@@ -230,83 +236,107 @@ class ChatTab(QWidget):
         self.entry.setFont(QFont("Helvetica", 13))
         self.entry.setFixedHeight(46)
         self.entry.setStyleSheet("""
-            QLineEdit{
+            QLineEdit {
                 background: #ffffff;
                 color: #000000;
                 border: 1px solid #d0d0d0;
                 border-radius: 23px;
                 padding: 0 20px;
             }
-            QLineEdit:focus{
+            QLineEdit:focus {
                 background: #ffffff;
                 color: #000000;
                 border: 1px solid #7c3aed;
             }
         """)
+
         self.completer = QCompleter(ALL_SUGGESTIONS)
         self.completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.completer.setFilterMode(Qt.MatchContains)
         self.completer.popup().setStyleSheet("""
-            QListView{
-                background: #1a1a3e;
-                color: #ffffff;
+            QListView {
+                background: #ffffff;
+                color: #000000;
                 font-size: 13px;
-                border: 1px solid rgba(0,212,255,0.4);
+                border: 1px solid #e0d9ff;
                 border-radius: 10px;
                 padding: 4px;
             }
-            QListView::item{ padding: 6px 10px; }
-            QListView::item:hover{ background: rgba(0,212,255,0.15); color: #5aabff; }
-            QListView::item:selected{ background: rgba(90,171,255,0.2); color: #5aabff; }
+            QListView::item { padding: 8px 12px; color: #000000; }
+            QListView::item:hover { background: #ede9fe; color: #4f46e5; }
+            QListView::item:selected { background: #ddd6fe; color: #4f46e5; }
         """)
         self.entry.setCompleter(self.completer)
         self.entry.returnPressed.connect(self._send)
 
-        btn = QPushButton("SEND ➤")
-        btn.setFixedSize(100, 46)
-        btn.setFont(QFont("Helvetica", 11, QFont.Bold))
+        btn = QPushButton("Send ➤")
+        btn.setFixedSize(90, 46)
+        btn.setFont(QFont("Helvetica", 12, QFont.Bold))
         btn.setCursor(Qt.PointingHandCursor)
         btn.setStyleSheet("""
-            QPushButton{
-                background: qlineargradient(x1:0,y1:0,x2:1,y2:0,
-                    stop:0 #5aabff, stop:1 #0099cc);
-                color:#000000;
-                border:none;
-                border-radius:23px;
-                font-weight:bold;
-                letter-spacing:1px;
+            QPushButton {
+                background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
+                    stop:0 #7c3aed, stop:1 #4f46e5);
+                color: #ffffff;
+                border: none;
+                border-radius: 23px;
             }
-            QPushButton:hover{
-                background: qlineargradient(x1:0,y1:0,x2:1,y2:0,
-                    stop:0 #a0d8ff, stop:1 #5aabff);
+            QPushButton:hover {
+                background: qlineargradient(x1:0,y1:0,x2:1,y2:1,
+                    stop:0 #6d28d9, stop:1 #4338ca);
             }
         """)
         btn.clicked.connect(self._send)
         bl.addWidget(self.entry)
         bl.addWidget(btn)
         root.addWidget(bar)
+
         self.entry.setFocus()
         QTimer.singleShot(400, self._welcome)
 
     def _welcome(self):
-        self._bot("Hi! 👋 I'm Raghav Chatbot.\nType a service name to get POC details.\n\nType 'list' to see all services.")
+        self._bot("Hi! 👋 I am Raghav Bot.\nType a service name or POC name to get details.\n\nType 'list' to see all services.")
 
     def _send(self):
         text = self.entry.text().strip()
-        if not text: return
+        if not text:
+            return
         self.entry.clear()
-        self._add("You", text, False)
+        self._add_user(text)
         response = get_response(text)
-        self._bot(response)
+        QTimer.singleShot(300, lambda r=response: self._bot(r))
 
     def _bot(self, msg):
-        self._add("Raghav Bot", msg, True)
+        self.chat.append("")
+        # Bot label in purple
+        self.chat.setTextColor(QColor("#7c3aed"))
+        self.chat.setFontWeight(QFont.Bold)
+        self.chat.setFontPointSize(9)
+        self.chat.insertPlainText("✦ Raghav Bot
+")
+        # Bot message in dark
+        self.chat.setTextColor(QColor("#1a1a2e"))
+        self.chat.setFontWeight(QFont.Normal)
+        self.chat.setFontPointSize(13)
+        self.chat.insertPlainText(msg + "
+")
+        self.chat.ensureCursorVisible()
 
-    def _add(self, sender, msg, is_bot):
-        self.msg_layout.insertWidget(self.msg_layout.count()-1, Bubble(sender, msg, is_bot))
-        QTimer.singleShot(50, lambda: self.scroll.verticalScrollBar().setValue(
-            self.scroll.verticalScrollBar().maximum()))
-
+    def _add_user(self, msg):
+        self.chat.append("")
+        # User label in orange
+        self.chat.setTextColor(QColor("#d97706"))
+        self.chat.setFontWeight(QFont.Bold)
+        self.chat.setFontPointSize(9)
+        self.chat.insertPlainText("  You
+")
+        # User message in dark
+        self.chat.setTextColor(QColor("#1a1a2e"))
+        self.chat.setFontWeight(QFont.Normal)
+        self.chat.setFontPointSize(13)
+        self.chat.insertPlainText(msg + "
+")
+        self.chat.ensureCursorVisible()
 
 # ── TASK TAB ─────────────────────────────────────────────
 class TaskTab(QWidget):
