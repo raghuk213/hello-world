@@ -74,44 +74,45 @@ def get_response(user_text):
 def web_search(query):
     try:
         encoded = urllib.parse.quote(query)
+        headers = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"}
 
-        # Try Wikipedia API first — very reliable
-        wiki_url = (f"https://en.wikipedia.org/api/rest_v1/page/summary/"
-                    f"{urllib.parse.quote(query.replace(' ', '_'))}")
-        req = urllib.request.Request(wiki_url, headers={"User-Agent": "RaghavChatbot/1.0"})
+        # 1. DuckDuckGo instant answers
+        ddg_url = f"https://api.duckduckgo.com/?q={encoded}&format=json&no_redirect=1&no_html=1&skip_disambig=1"
         try:
-            with urllib.request.urlopen(req, timeout=8) as resp:
+            req = urllib.request.Request(ddg_url, headers=headers)
+            with urllib.request.urlopen(req, timeout=10) as resp:
                 data = json.loads(resp.read().decode())
-                if data.get("extract"):
-                    extract = data["extract"][:500]
-                    title = data.get("title", query)
-                    return f"📖 {title}\n\n{extract}"
+            results = []
+            if data.get("Answer"):
+                results.append(data["Answer"])
+            if data.get("AbstractText"):
+                results.append(data["AbstractText"][:500])
+            for topic in data.get("RelatedTopics", [])[:2]:
+                if isinstance(topic, dict) and topic.get("Text"):
+                    results.append(topic["Text"][:200])
+            if results:
+                return "🌐 " + "\n\n".join(results[:2])
         except Exception:
             pass
 
-        # Fallback: DuckDuckGo instant answers
-        ddg_url = f"https://api.duckduckgo.com/?q={encoded}&format=json&no_redirect=1&no_html=1"
-        req2 = urllib.request.Request(ddg_url, headers={"User-Agent": "Mozilla/5.0"})
+        # 2. Wikipedia opensearch fallback
+        search_url = f"https://en.wikipedia.org/w/api.php?action=opensearch&search={encoded}&limit=1&format=json"
         try:
-            with urllib.request.urlopen(req2, timeout=8) as resp:
-                data = json.loads(resp.read().decode())
-                results = []
-                if data.get("Answer"):
-                    results.append(data["Answer"])
-                if data.get("AbstractText"):
-                    results.append(data["AbstractText"][:400])
-                for topic in data.get("RelatedTopics", [])[:2]:
-                    if isinstance(topic, dict) and topic.get("Text"):
-                        results.append(topic["Text"][:200])
-                if results:
-                    return "🌐 " + "\n\n".join(results[:2])
+            req2 = urllib.request.Request(search_url, headers=headers)
+            with urllib.request.urlopen(req2, timeout=10) as resp:
+                r = json.loads(resp.read().decode())
+            if r and len(r) > 2 and r[2]:
+                title = r[1][0] if r[1] else query
+                desc = r[2][0]
+                if desc:
+                    return f"📖 {title}\n\n{desc}"
         except Exception:
             pass
 
-        return (f'I searched for "{query}" but couldn\'t find a clear answer.\n'
-                f"Try asking differently or check your internet connection.")
+        return f'Sorry, I couldn\'t find results for "{query}".\nTry a different question!'
     except Exception as e:
         return f"❌ Error: {str(e)}"
+
 
 POPUP_STYLE = """
     QMessageBox { background-color: #ddeeff; }
