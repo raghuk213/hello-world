@@ -1,9 +1,6 @@
 import sys
 import json
 import os
-import threading
-import urllib.request
-import urllib.parse
 from datetime import datetime, timedelta
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout,
@@ -71,48 +68,6 @@ def get_response(user_text):
             return f"📌 Service: {key}\n👤 POC: {DATA[key]}"
     return f'Sorry, couldn\'t find "{text}".\nType "list" to see all services.'
 
-def web_search(query):
-    try:
-        encoded = urllib.parse.quote(query)
-        headers = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"}
-
-        # 1. DuckDuckGo instant answers
-        ddg_url = f"https://api.duckduckgo.com/?q={encoded}&format=json&no_redirect=1&no_html=1&skip_disambig=1"
-        try:
-            req = urllib.request.Request(ddg_url, headers=headers)
-            with urllib.request.urlopen(req, timeout=10) as resp:
-                data = json.loads(resp.read().decode())
-            results = []
-            if data.get("Answer"):
-                results.append(data["Answer"])
-            if data.get("AbstractText"):
-                results.append(data["AbstractText"][:500])
-            for topic in data.get("RelatedTopics", [])[:2]:
-                if isinstance(topic, dict) and topic.get("Text"):
-                    results.append(topic["Text"][:200])
-            if results:
-                return "🌐 " + "\n\n".join(results[:2])
-        except Exception:
-            pass
-
-        # 2. Wikipedia opensearch fallback
-        search_url = f"https://en.wikipedia.org/w/api.php?action=opensearch&search={encoded}&limit=1&format=json"
-        try:
-            req2 = urllib.request.Request(search_url, headers=headers)
-            with urllib.request.urlopen(req2, timeout=10) as resp:
-                r = json.loads(resp.read().decode())
-            if r and len(r) > 2 and r[2]:
-                title = r[1][0] if r[1] else query
-                desc = r[2][0]
-                if desc:
-                    return f"📖 {title}\n\n{desc}"
-        except Exception:
-            pass
-
-        return f'Sorry, I couldn\'t find results for "{query}".\nTry a different question!'
-    except Exception as e:
-        return f"❌ Error: {str(e)}"
-
 
 POPUP_STYLE = """
     QMessageBox { background-color: #ddeeff; }
@@ -169,7 +124,6 @@ class Bubble(QFrame):
         self.setStyleSheet("background:transparent; border:none;")
 
 
-# ── SEARCHING BUBBLE removed - using simple approach ─────
 
 # ── CHAT TAB ─────────────────────────────────────────────
 class ChatTab(QWidget):
@@ -202,7 +156,7 @@ class ChatTab(QWidget):
         bl.setSpacing(8)
 
         self.entry = QLineEdit()
-        self.entry.setPlaceholderText("Ask anything or type a service name...")
+        self.entry.setPlaceholderText("Type a service name...")
         self.entry.setFont(QFont("Helvetica", 13))
         self.entry.setFixedHeight(44)
         self.entry.setStyleSheet("""
@@ -234,20 +188,15 @@ class ChatTab(QWidget):
         QTimer.singleShot(400, self._welcome)
 
     def _welcome(self):
-        self._bot("Hi! 👋 I'm Raghav Chatbot.\n\n🔍 Ask me anything — I'll search the internet!\n📋 Or type a service name to get POC details.\n📝 Type 'list' to see all services.")
+        self._bot("Hi! 👋 I'm Raghav Chatbot.\nType a service name to get POC details.\n\nType 'list' to see all services.")
 
     def _send(self):
         text = self.entry.text().strip()
         if not text: return
         self.entry.clear()
         self._add("You", text, False)
-        threading.Thread(target=self._process, args=(text,), daemon=True).start()
-
-    def _process(self, text):
         response = get_response(text)
-        if response.startswith("Sorry"):
-            response = web_search(text)
-        QTimer.singleShot(0, lambda r=response: self._bot(r))
+        self._bot(response)
 
     def _bot(self, msg):
         self._add("Raghav Bot", msg, True)
