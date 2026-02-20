@@ -404,6 +404,33 @@ class TaskTab(QWidget):
         """)
         root.addWidget(self.dt_picker)
 
+        remind_lbl = QLabel("Remind me before due time:")
+        remind_lbl.setFont(QFont("Helvetica", 11, QFont.Bold))
+        remind_lbl.setStyleSheet("color:#555555; background:transparent;")
+        root.addWidget(remind_lbl)
+
+        from PyQt5.QtWidgets import QComboBox
+        self.remind_combo = QComboBox()
+        self.remind_combo.addItems([
+            "15 minutes before",
+            "30 minutes before",
+            "1 hour before",
+            "2 hours before",
+            "3 hours before",
+            "6 hours before",
+            "1 day before",
+        ])
+        self.remind_combo.setCurrentIndex(2)  # default: 1 hour
+        self.remind_combo.setFixedHeight(42)
+        self.remind_combo.setFont(QFont("Helvetica", 13))
+        self.remind_combo.setStyleSheet("""
+            QComboBox{background:#ffffff; color:#1a1a2e; border:1px solid #e0d9ff; border-radius:10px; padding:0 12px;}
+            QComboBox:focus{border:1px solid #7c3aed;}
+            QComboBox::drop-down{border:none; width:30px;}
+            QComboBox QAbstractItemView{background:#ffffff; color:#1a1a2e; border:1px solid #e0d9ff; border-radius:8px; selection-background-color:#ede9fe; selection-color:#4f46e5;}
+        """)
+        root.addWidget(self.remind_combo)
+
         add_btn = QPushButton("➕  Add Task")
         add_btn.setFixedHeight(44)
         add_btn.setFont(QFont("Helvetica", 13, QFont.Bold))
@@ -456,6 +483,18 @@ class TaskTab(QWidget):
         self.reminder_timer.timeout.connect(self._check_reminders)
         self.reminder_timer.start(30000)
 
+    def _remind_minutes(self):
+        mapping = {
+            "15 minutes before": 15,
+            "30 minutes before": 30,
+            "1 hour before":     60,
+            "2 hours before":    120,
+            "3 hours before":    180,
+            "6 hours before":    360,
+            "1 day before":      1440,
+        }
+        return mapping.get(self.remind_combo.currentText(), 60)
+
     def _add_task(self):
         name = self.task_input.text().strip()
         if not name:
@@ -465,12 +504,20 @@ class TaskTab(QWidget):
         if due_dt <= datetime.now():
             show_popup(self, "Invalid Time", "Please select a future date and time!", "warn")
             return
-        task = {"name": name, "due": due_dt.strftime("%Y-%m-%d %H:%M"), "reminded": False, "done": False}
+        remind_mins = self._remind_minutes()
+        task = {
+            "name": name,
+            "due": due_dt.strftime("%Y-%m-%d %H:%M"),
+            "remind_mins": remind_mins,
+            "reminded": False,
+            "done": False
+        }
         self.tasks.append(task)
         save_tasks(self.tasks)
         self.task_input.clear()
         self._refresh_list()
-        show_popup(self, "Task Added ✅", f'"{name}" added!\n🔔 Reminder set 2 hours before due time.')
+        remind_label = self.remind_combo.currentText()
+        show_popup(self, "Task Added ✅", f'"{name}" added!\n🔔 You will be reminded {remind_label}.')
 
     def _mark_done(self):
         row = self.task_list.currentRow()
@@ -528,13 +575,25 @@ class TaskTab(QWidget):
             if t.get("reminded") or t.get("done"):
                 continue
             due = datetime.strptime(t["due"], "%Y-%m-%d %H:%M")
-            remind_at = due - timedelta(hours=2)
+            remind_mins = t.get("remind_mins", 60)
+            remind_at = due - timedelta(minutes=remind_mins)
             if now >= remind_at and now < due:
                 t["reminded"] = True
                 changed = True
+                time_left = int((due - now).total_seconds() / 60)
+                if time_left >= 60:
+                    time_str = f"{time_left // 60} hour(s) {time_left % 60} min"
+                else:
+                    time_str = f"{time_left} minutes"
                 msg = QMessageBox()
                 msg.setWindowTitle("⏰ Task Reminder!")
-                msg.setText(f'🔔 Reminder!\n\n"{t["name"]}"\nis due at {due.strftime("%I:%M %p")} today!\n\n⏳ Only 2 hours left!')
+                msg.setText(
+                    f"🔔 REMINDER\n\n"
+                    f"📌 Task: {t['name']}\n"
+                    f"📅 Due: {due.strftime('%d %b %Y, %I:%M %p')}\n"
+                    f"⏳ Time Left: {time_str}\n\n"
+                    f"Please complete your task!"
+                )
                 msg.setIcon(QMessageBox.Information)
                 msg.setStyleSheet(POPUP_STYLE)
                 msg.setWindowFlags(Qt.WindowStaysOnTopHint)
