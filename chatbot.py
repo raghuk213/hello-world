@@ -24,6 +24,8 @@ DATA = {
     "Tops Team":                                     "kiran4.s@ril.com",
 }
 ALL_KEYS = list(DATA.keys())
+ALL_POCS = list(set(poc.strip() for pocs in DATA.values() for poc in pocs.split(",")))
+ALL_SUGGESTIONS = ALL_KEYS + ALL_POCS
 TASKS_FILE = os.path.expanduser("~/Desktop/tasks.json")
 NOTES_FILE = os.path.expanduser("~/Desktop/raghav_notes.json")
 
@@ -181,7 +183,7 @@ class ChatTab(QWidget):
             QLineEdit{background:#fff; color:#000000; border:2px solid #90c0e8; border-radius:22px; padding:0 16px;}
             QLineEdit:focus{border:2px solid #1a73e8;}
         """)
-        self.completer = QCompleter(ALL_KEYS)
+        self.completer = QCompleter(ALL_SUGGESTIONS)
         self.completer.setCaseSensitivity(Qt.CaseInsensitive)
         self.completer.setFilterMode(Qt.MatchContains)
         self.completer.popup().setStyleSheet("""
